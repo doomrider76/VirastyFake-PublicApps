@@ -17,9 +17,8 @@
     --font-family: 'CustomFont', sans-serif;
     
     --safe-top: env(safe-area-inset-top, 0px);
-    --safe-bottom: env(safe-area-inset-bottom, 0px);
     --header-height: 56px; 
-    --tabs-height: 58px; 
+    --nav-height: 58px;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -95,9 +94,7 @@ svg { width: 24px; height: 24px; }
 
 .tab-btn.active { color: var(--text-primary); background: rgba(255, 255, 255, 0.1); }
 
-/* ========================================= */
-/* هدرهای شناور داخلی (دایرکت، چت، تنظیمات، پروفایل کاربر) */
-/* ========================================= */
+/* هدرهای شناور داخلی */
 .floating-sub-header { 
     display: flex; align-items: center; justify-content: flex-start; gap: 12px; padding: 10px 16px; 
     background: var(--glass-bg);
@@ -116,9 +113,8 @@ svg { width: 24px; height: 24px; }
     background: linear-gradient(90deg, #f7f9f9, #8bb4d9); 
     -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
 }
-/* ========================================= */
 
-/* هدرهای داخلی عادی (توییت) */
+/* هدرهای داخلی عادی */
 .sub-header { 
     display: flex; align-items: center; gap: 16px; padding: calc(12px + var(--safe-top)) 20px 12px; 
     background: var(--glass-bg);
@@ -135,18 +131,18 @@ svg { width: 24px; height: 24px; }
 .view {
     height: 100vh; height: 100dvh;
     padding-top: calc(4px + var(--safe-top) + var(--header-height) + 4px + var(--header-height) + 4px); 
-    padding-bottom: calc(95px + var(--safe-bottom)); /* افزایش فاصله برای منوی شناور جدید */
+    padding-bottom: 75px; 
     overflow-y: auto; display: none; background-color: var(--bg-color);
     overscroll-behavior-y: contain;
 }
 .view.active { display: block; }
 
-/* تنظیمات اختصاصی ویوها برای هدرهای شناور */
-#view-messages, #view-settings, #view-user-profile { padding-top: calc(80px + var(--safe-top)) !important; padding-bottom: calc(95px + var(--safe-bottom)); }
+/* تنظیمات اختصاصی ویوها */
+#view-messages, #view-settings, #view-user-profile { padding-top: calc(80px + var(--safe-top)) !important; padding-bottom: 75px; }
 #view-profile { padding-top: 0; }
-#view-post-detail { padding-top: 0; padding-bottom: calc(30px + var(--safe-bottom)); } 
+#view-post-detail { padding-top: 0; padding-bottom: 30px; } 
 
-/* رفع باگ صفحه چت */
+/* صفحه چت */
 #view-chat { padding-top: calc(80px + var(--safe-top)) !important; padding-bottom: 0; height: 100dvh; flex-direction: column; }
 #view-chat.active { display: flex; } 
 
@@ -177,80 +173,37 @@ svg { width: 24px; height: 24px; }
 .post-text { font-size: 15px; line-height: 1.6; margin-bottom: 8px; white-space: pre-wrap; word-break: break-word; color: var(--text-primary); }
 .post-img { width: 100%; border-radius: 16px; margin-top: 8px; margin-bottom: 8px; border: 1px solid var(--border-color); max-height: 400px; object-fit: cover; }
 
-/* دکمه سه نقطه */
-.post-more-btn {
-    margin-right: auto;
-    color: var(--text-secondary);
-    padding: 4px;
-    border-radius: 50%;
-    transition: all 0.2s;
-}
-.post-more-btn:hover {
-    background: rgba(255,255,255,0.1);
-    color: var(--text-primary);
-}
+.post-more-btn { margin-right: auto; color: var(--text-secondary); padding: 4px; border-radius: 50%; transition: all 0.2s; }
+.post-more-btn:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
 .post-more-btn svg { width: 20px; height: 20px; }
 
 /* تیک آبی */
-.verified-icon { 
-    width: 22px; height: 22px; object-fit: contain; display: inline-block; vertical-align: middle; 
-    transform: translate(2px, 1px); margin-right: 4px; 
-}
+.verified-icon { width: 22px; height: 22px; object-fit: contain; display: inline-block; vertical-align: middle; transform: translate(2px, 1px); margin-right: 4px; }
 .verified-icon.lg { width: 28px; height: 28px; transform: translate(2px, 0px); }
 
 /* ایموجی‌های ویندوز ۱۱ */
-.emoji-img {
-    width: 1.2em;
-    height: 1.2em;
-    vertical-align: -0.2em;
-    margin: 0 2px;
-    display: inline-block;
-}
+.emoji-img { width: 1.2em; height: 1.2em; vertical-align: -0.2em; margin: 0 2px; display: inline-block; }
 
 /* منشن ها */
-.mention {
-    color: var(--accent-color);
-    font-weight: 600;
-    cursor: pointer;
-    direction: ltr;
-    display: inline-block;
-}
-.mention:hover {
-    text-decoration: underline;
-}
+.mention { color: var(--accent-color); font-weight: 600; cursor: pointer; direction: ltr; display: inline-block; }
+.mention:hover { text-decoration: underline; }
 
 /* نظرسنجی */
-.poll-container {
-    margin-top: 12px; margin-bottom: 8px; border: 1px solid var(--border-color);
-    border-radius: 16px; padding: 12px; background: rgba(255,255,255,0.02);
-}
+.poll-container { margin-top: 12px; margin-bottom: 8px; border: 1px solid var(--border-color); border-radius: 16px; padding: 12px; background: rgba(255,255,255,0.02); }
 .poll-question { font-weight: 700; font-size: 15px; margin-bottom: 12px; color: var(--text-primary); }
-.poll-option {
-    position: relative; padding: 10px 12px; margin-bottom: 8px; border-radius: 12px;
-    background: rgba(255,255,255,0.05); border: 1px solid transparent;
-    overflow: hidden; cursor: pointer; transition: all 0.2s;
-}
+.poll-option { position: relative; padding: 10px 12px; margin-bottom: 8px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid transparent; overflow: hidden; cursor: pointer; transition: all 0.2s; }
 .poll-option:hover { background: rgba(255,255,255,0.1); }
 .poll-option.selected { border-color: var(--accent-color); }
-.poll-progress {
-    position: absolute; top: 0; right: 0; height: 100%;
-    background: rgba(29, 155, 240, 0.15); transition: width 0.5s ease-in-out; z-index: 0;
-}
+.poll-progress { position: absolute; top: 0; right: 0; height: 100%; background: rgba(29, 155, 240, 0.15); transition: width 0.5s ease-in-out; z-index: 0; }
 .poll-option-content { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
 .poll-option-text { font-weight: 500; }
 .poll-option-percent { font-weight: 700; color: var(--accent-color); }
 .poll-footer { font-size: 13px; color: var(--text-secondary); margin-top: 8px; text-align: left; }
 
 .compose-poll-container { padding: 0 16px 16px; background-color: var(--bg-color); }
-#poll-question, .poll-option-input {
-    width: 100%; background: transparent; border: 1px solid var(--border-color); color: white;
-    padding: 12px; border-radius: 12px; font-family: inherit; font-size: 15px; margin-bottom: 8px; outline: none;
-}
+#poll-question, .poll-option-input { width: 100%; background: transparent; border: 1px solid var(--border-color); color: white; padding: 12px; border-radius: 12px; font-family: inherit; font-size: 15px; margin-bottom: 8px; outline: none; }
 #poll-question:focus, .poll-option-input:focus { border-color: var(--accent-color); }
-.btn-add-poll-option {
-    background: transparent; border: 1px dashed var(--border-color); color: var(--accent-color);
-    padding: 8px; border-radius: 12px; width: 100%; font-size: 14px; font-weight: 700; transition: all 0.2s;
-}
+.btn-add-poll-option { background: transparent; border: 1px dashed var(--border-color); color: var(--accent-color); padding: 8px; border-radius: 12px; width: 100%; font-size: 14px; font-weight: 700; transition: all 0.2s; }
 .btn-add-poll-option:hover { background: rgba(29, 155, 240, 0.1); border-color: var(--accent-color); }
 
 /* دکمه دنبال کردن */
@@ -284,10 +237,7 @@ svg { width: 24px; height: 24px; }
 
 /* پروفایل */
 .cover-photo { height: 180px; background-size: cover; background-position: center; position: relative; background-color: var(--bg-color); border-radius: 0 0 20px 20px; }
-.back-btn { 
-    position: absolute; top: calc(16px + var(--safe-top)); right: 16px; 
-    background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); color: white; 
-}
+.back-btn { position: absolute; top: calc(16px + var(--safe-top)); right: 16px; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); color: white; }
 
 .profile-actions-row { display: flex; justify-content: space-between; align-items: flex-end; padding: 0 16px; margin-top: 0; position: relative; min-height: 60px; }
 .profile-avatar { width: 84px; height: 84px; border-radius: 40%; border: 4px solid var(--bg-color); background: var(--bg-color); overflow: hidden; margin-top: -46px; }
@@ -310,11 +260,11 @@ svg { width: 24px; height: 24px; }
 .ptab.active { color: var(--text-primary); background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.1); }
 
 /* ========================================= */
-/* اصلاح فاصله دکمه شناور نوشتن (شناور مثل پیسفون) */
+/* دکمه شناور نوشتن (چسبیده به پایین) */
 /* ========================================= */
 .fab { 
     position: fixed; 
-    bottom: calc(84px + var(--safe-bottom)); /* 12px پایین + 58px ارتفاع منو + 14px فاصله */
+    bottom: 70px !important; 
     left: 16px; 
     background: var(--accent-color); color: white; display: flex; align-items: center; gap: 6px; 
     padding: 12px 20px; border-radius: 30px; font-weight: 800; font-size: 16px; 
@@ -324,11 +274,11 @@ svg { width: 24px; height: 24px; }
 .fab span { margin-right: 4px; }
 .fab svg { stroke: white; }
 
-/* نوار پایین (دقیقاً مثل منوی پیسفون شناور و با فاصله) */
+/* منوی پایین (دقیقاً چسبیده به لبه با 2 پیکسل فاصله) */
 .bottom-nav { 
     position: fixed; 
-    bottom: calc(12px + var(--safe-bottom)); 
-    left: 14px; right: 14px; 
+    bottom: 2px !important; 
+    left: 12px; right: 12px; 
     background: var(--glass-bg); backdrop-filter: blur(24px) saturate(200%); -webkit-backdrop-filter: blur(24px) saturate(200%); 
     border: 1px solid var(--glass-border); border-top-color: rgba(255,255,255,0.2); 
     border-radius: 999px; display: flex; justify-content: space-around; align-items: center; padding: 6px 8px; 
@@ -433,7 +383,7 @@ svg { width: 24px; height: 24px; }
     backdrop-filter: blur(25px) saturate(200%); -webkit-backdrop-filter: blur(25px) saturate(200%);
     border: 1px solid var(--glass-border); border-bottom: none;
     border-radius: 24px 24px 0 0;
-    padding: 16px 16px calc(16px + var(--safe-bottom));
+    padding: 16px 16px 24px;
     display: none;
     flex-direction: column;
     gap: 8px;
@@ -530,11 +480,11 @@ svg { width: 24px; height: 24px; }
     text-align: left;
 }
 
-/* باکس تایپ چت (شناور و هماهنگ با منوی پایین) */
+/* باکس تایپ چت (هماهنگ با منوی پایین) */
 .chat-input-area {
     position: fixed;
-    bottom: calc(12px + var(--safe-bottom));
-    left: 14px; right: 14px;
+    bottom: 2px !important;
+    left: 12px; right: 12px;
     background: var(--glass-bg);
     backdrop-filter: blur(24px) saturate(200%); -webkit-backdrop-filter: blur(24px) saturate(200%);
     border: 1px solid var(--glass-border); border-top-color: rgba(255,255,255,0.2);
@@ -586,7 +536,7 @@ svg { width: 24px; height: 24px; }
     border: 1px solid var(--glass-border); border-bottom: none;
     border-radius: 24px 24px 0 0;
     box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
-    padding: 24px 24px calc(24px + var(--safe-bottom));
+    padding: 24px 24px 32px;
     text-align: center;
     transform: translateY(100%);
     transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
