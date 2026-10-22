@@ -18,8 +18,8 @@
     
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
-    --header-height: 60px;
-    --tabs-height: 60px;
+    --header-height: 56px; 
+    --tabs-height: 56px; 
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -37,14 +37,18 @@ body {
 button { background: none; border: none; color: inherit; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; }
 svg { width: 24px; height: 24px; }
 
-/* هدر شناور شیشه‌ای */
+/* هدر شناور */
 .top-header {
     display: flex; justify-content: space-between; align-items: center;
     padding: 10px 16px; 
     background: var(--glass-bg);
     backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
-    position: fixed; top: calc(20px + var(--safe-top)); left: 16px; right: 16px; z-index: 1000;
-    border-radius: 30px; height: var(--header-height);
+    position: fixed; 
+    top: calc(4px + var(--safe-top));
+    left: 12px; right: 12px; 
+    z-index: 1000;
+    border-radius: 30px; 
+    height: var(--header-height);
     border: 1px solid rgba(255, 255, 255, 0.08); border-top-color: rgba(255, 255, 255, 0.2);
     box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
 }
@@ -67,7 +71,12 @@ svg { width: 24px; height: 24px; }
 
 /* تب‌های بالای صفحه */
 .top-tabs-container {
-    position: fixed; top: calc(90px + var(--safe-top)); left: 16px; right: 16px; height: var(--tabs-height); z-index: 999; display: flex;
+    position: fixed; 
+    top: calc(4px + var(--safe-top) + var(--header-height) + 4px); 
+    left: 12px; right: 12px; 
+    height: var(--tabs-height); 
+    z-index: 999; 
+    display: flex;
 }
 
 .top-tabs {
@@ -86,7 +95,7 @@ svg { width: 24px; height: 24px; }
 
 .tab-btn.active { color: var(--text-primary); background: rgba(255, 255, 255, 0.1); }
 
-/* هدر داخلی */
+/* هدر داخلی صفحات */
 .sub-header { 
     display: flex; align-items: center; gap: 16px; padding: calc(12px + var(--safe-top)) 20px 12px; 
     background: var(--glass-bg);
@@ -102,15 +111,15 @@ svg { width: 24px; height: 24px; }
 /* ویوها */
 .view {
     height: 100vh; height: 100dvh;
-    padding-top: calc(170px + var(--safe-top)); 
-    padding-bottom: calc(80px + var(--safe-bottom)); 
+    padding-top: calc(4px + var(--safe-top) + var(--header-height) + 4px + var(--tabs-height) + 4px); 
+    padding-bottom: calc(76px + var(--safe-bottom)); 
     overflow-y: auto; display: none; background-color: var(--bg-color);
     overscroll-behavior-y: contain;
 }
 .view.active { display: block; }
 
-#view-profile { padding-top: 0; }
-#view-post-detail, #view-settings { padding-top: 0; padding-bottom: calc(20px + var(--safe-bottom)); } 
+#view-profile, #view-messages, #view-post-detail, #view-settings { padding-top: 0; }
+#view-post-detail, #view-settings, #view-messages { padding-bottom: calc(20px + var(--safe-bottom)); } 
 
 #post-detail-content {
     margin: 16px; background: rgba(255, 255, 255, 0.02);
@@ -118,7 +127,7 @@ svg { width: 24px; height: 24px; }
     overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.2);
 }
 
-#feed, #profile-feed, #search-results, #bookmarks-feed { display: flex; flex-direction: column; background-color: var(--bg-color); }
+#feed, #profile-feed, #search-results, #bookmarks-feed, #messages-list { display: flex; flex-direction: column; background-color: var(--bg-color); }
 
 /* حالت خالی */
 .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; text-align: center; color: var(--text-secondary); }
@@ -127,7 +136,7 @@ svg { width: 24px; height: 24px; }
 .empty-state p { font-size: 15px; line-height: 1.6; }
 
 /* پست‌ها */
-.post { display: flex; padding: 16px; border-bottom: 1px solid var(--border-color); background-color: var(--bg-color); transition: background 0.2s; cursor: pointer; }
+.post { display: flex; padding: 16px; border-bottom: 1px solid var(--border-color); background-color: var(--bg-color); transition: background 0.2s; cursor: pointer; position: relative; }
 .post:hover { background: rgba(255, 255, 255, 0.03); }
 
 .post-avatar { width: 48px; height: 48px; border-radius: 40%; margin-left: 12px; overflow: hidden; flex-shrink: 0; border: 1px solid var(--border-color); }
@@ -138,6 +147,20 @@ svg { width: 24px; height: 24px; }
 .post-handle, .post-time { color: var(--text-secondary); font-size: 14px; }
 .post-text { font-size: 15px; line-height: 1.6; margin-bottom: 8px; white-space: pre-wrap; word-break: break-word; color: var(--text-primary); }
 .post-img { width: 100%; border-radius: 16px; margin-top: 8px; margin-bottom: 8px; border: 1px solid var(--border-color); max-height: 400px; object-fit: cover; }
+
+/* دکمه سه نقطه */
+.post-more-btn {
+    margin-right: auto;
+    color: var(--text-secondary);
+    padding: 4px;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+.post-more-btn:hover {
+    background: rgba(255,255,255,0.1);
+    color: var(--text-primary);
+}
+.post-more-btn svg { width: 20px; height: 20px; }
 
 /* تیک آبی */
 .verified-icon { 
@@ -245,22 +268,28 @@ svg { width: 24px; height: 24px; }
 .ptab { padding: 8px 16px; border-radius: 20px; font-weight: 700; font-size: 15px; color: var(--text-secondary); background: transparent; white-space: nowrap; border: 1px solid transparent; }
 .ptab.active { color: var(--text-primary); background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.1); }
 
-/* دکمه شناور */
+/* دکمه شناور نوشتن */
 .fab { 
-    position: fixed; bottom: calc(90px + var(--safe-bottom)); left: 20px; 
-    background: var(--accent-color); color: white; display: flex; align-items: center; gap: 8px; 
-    padding: 14px 22px; border-radius: 30px; font-weight: 800; font-size: 16px; 
+    position: fixed; 
+    bottom: calc(4px + var(--safe-bottom) + var(--tabs-height) + 8px); 
+    left: 16px; 
+    background: var(--accent-color); color: white; display: flex; align-items: center; gap: 6px; 
+    padding: 12px 20px; border-radius: 30px; font-weight: 800; font-size: 16px; 
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); z-index: 90; transition: transform 0.2s; 
 }
 .fab:active { transform: scale(0.92); }
-.fab svg { width: 20px; height: 20px; }
+.fab span { margin-right: 4px; }
+.fab svg { stroke: white; }
 
 /* نوار پایین */
 .bottom-nav { 
-    position: fixed; bottom: calc(16px + var(--safe-bottom)); left: 16px; right: 16px; 
+    position: fixed; 
+    bottom: calc(4px + var(--safe-bottom)); 
+    left: 12px; right: 12px; 
     background: var(--glass-bg); backdrop-filter: blur(24px) saturate(200%); -webkit-backdrop-filter: blur(24px) saturate(200%); 
     border: 1px solid var(--glass-border); border-top-color: rgba(255,255,255,0.2); 
-    border-radius: 40px; display: flex; justify-content: space-around; padding: 8px 12px; 
+    border-radius: 40px; display: flex; justify-content: space-around; padding: 6px 12px; 
+    height: var(--tabs-height);
     z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1); 
 }
 .nav-item { color: var(--text-secondary); padding: 8px 12px; border-radius: 20px; transition: all 0.3s; }
@@ -333,12 +362,74 @@ svg { width: 24px; height: 24px; }
 .reaction-popup { position: fixed; background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 30px; padding: 8px 12px; display: none; gap: 8px; z-index: 3000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); transform: translate(-50%, -50%); }
 .reaction-popup.show { display: flex; }
 
-/* استایل مودال بروزرسانی (Bottom Sheet) */
-#update-modal {
-    align-items: flex-end;
-    padding: 0;
+/* ========================================= */
+/* استایل منوی سه نقطه (تبدیل به Bottom Sheet) */
+/* ========================================= */
+.post-options-menu {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--glass-bg);
+    backdrop-filter: blur(25px) saturate(200%); -webkit-backdrop-filter: blur(25px) saturate(200%);
+    border: 1px solid var(--glass-border); border-bottom: none;
+    border-radius: 24px 24px 0 0;
+    padding: 16px 16px calc(16px + var(--safe-bottom));
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 3000;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
+.post-options-menu.show { 
+    display: flex; 
+    transform: translateY(0);
+}
+.post-option-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    cursor: pointer;
+    background: rgba(255,255,255,0.05);
+    transition: background 0.2s;
+}
+.post-option-item:hover { background: rgba(255,255,255,0.1); }
+.post-option-item svg { width: 20px; height: 20px; }
+.post-option-item.danger { color: #f91880; }
+.post-option-item.danger:hover { background: rgba(249, 24, 128, 0.1); }
+.post-option-cancel {
+    margin-top: 8px;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+.post-option-cancel:hover { background: rgba(255,255,255,0.05); color: var(--text-primary); }
+/* ========================================= */
 
+/* دایرکت (پیام‌ها) */
+.dm-item {
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+}
+.dm-item:hover { background: rgba(255,255,255,0.03); }
+.dm-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); }
+.dm-content { flex: 1; }
+.dm-header { display: flex; justify-content: space-between; margin-bottom: 4px; }
+.dm-name { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 4px; }
+.dm-time { font-size: 12px; color: var(--text-secondary); }
+.dm-text { font-size: 14px; color: var(--text-secondary); line-height: 1.5; }
+
+/* مودال بروزرسانی */
+#update-modal { align-items: flex-end; padding: 0; }
 .update-modal-content {
     background: var(--glass-bg);
     backdrop-filter: blur(30px) saturate(200%); -webkit-backdrop-filter: blur(30px) saturate(200%);
@@ -351,49 +442,15 @@ svg { width: 24px; height: 24px; }
     transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     max-width: 100%;
 }
-
-#update-modal.show .update-modal-content {
-    transform: translateY(0);
-}
-
-.bottom-sheet-handle {
-    width: 40px;
-    height: 5px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 10px;
-    margin: 0 auto 20px auto;
-}
-
+#update-modal.show .update-modal-content { transform: translateY(0); }
+.bottom-sheet-handle { width: 40px; height: 5px; background: rgba(255, 255, 255, 0.2); border-radius: 10px; margin: 0 auto 20px auto; }
 .update-icon { font-size: 50px; margin-bottom: 12px; }
 .update-modal-content h2 { font-size: 22px; font-weight: 900; margin-bottom: 8px; color: var(--accent-color); }
 .update-modal-content p { font-size: 15px; color: var(--text-secondary); margin-bottom: 16px; }
-
-/* اصلاح استایل لیست تغییرات */
-.changelog {
-    text-align: right;
-    background: rgba(0,0,0,0.2);
-    padding: 16px 20px;
-    border-radius: 12px;
-    margin-bottom: 24px;
-    font-size: 14px;
-    line-height: 1.8;
-    color: var(--text-primary);
-    list-style: none; /* حذف نقطه‌ها */
-}
-.changelog li {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    margin-bottom: 8px;
-}
-.changelog li:last-child {
-    margin-bottom: 0;
-}
-.changelog .emoji-img {
-    margin-top: 4px;
-    flex-shrink: 0;
-}
-
+.changelog { text-align: right; background: rgba(0,0,0,0.2); padding: 16px 20px; border-radius: 12px; margin-bottom: 24px; font-size: 14px; line-height: 1.8; color: var(--text-primary); list-style: none; }
+.changelog li { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
+.changelog li:last-child { margin-bottom: 0; }
+.changelog .emoji-img { margin-top: 4px; flex-shrink: 0; }
 .update-actions { display: flex; gap: 12px; justify-content: center; }
 .update-actions button { flex: 1; padding: 14px; font-size: 16px; border-radius: 16px; }
 
