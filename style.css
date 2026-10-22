@@ -271,7 +271,7 @@ svg { width: 24px; height: 24px; }
 /* دکمه شناور نوشتن (تنظیم شده بر اساس منوی پایین جدید) */
 .fab { 
     position: fixed; 
-    bottom: calc(6px + var(--safe-bottom) + var(--tabs-height) + 6px); /* 6px پایین منو + 6px فاصله */
+    bottom: calc(3px + var(--safe-bottom) + var(--tabs-height) + 6px); /* 3px پایین منو + 6px فاصله */
     left: 16px; 
     background: var(--accent-color); color: white; display: flex; align-items: center; gap: 6px; 
     padding: 12px 20px; border-radius: 30px; font-weight: 800; font-size: 16px; 
@@ -281,10 +281,10 @@ svg { width: 24px; height: 24px; }
 .fab span { margin-right: 4px; }
 .fab svg { stroke: white; }
 
-/* نوار پایین (5 پیکسل بالاتر از حالت قبل) */
+/* نوار پایین (3 پیکسل پایین‌تر از درخواست قبلی) */
 .bottom-nav { 
     position: fixed; 
-    bottom: calc(6px + var(--safe-bottom)); /* دقیقاً 6 پیکسل از پایین (قبلا 1 بود، 5 تا بالا اومد) */
+    bottom: calc(3px + var(--safe-bottom)); /* دقیقاً 3 پیکسل از پایین (قبلا 6 بود، 3 تا اومد پایین) */
     left: 12px; right: 12px; 
     background: var(--glass-bg); backdrop-filter: blur(24px) saturate(200%); -webkit-backdrop-filter: blur(24px) saturate(200%); 
     border: 1px solid var(--glass-border); border-top-color: rgba(255,255,255,0.2); 
