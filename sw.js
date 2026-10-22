@@ -1,4 +1,4 @@
-const CACHE_NAME = 'viraasti-v1.1.3'; // نسخه کش را بالا بردم تا تغییرات جدید اعمال شود
+const CACHE_NAME = 'viraasti-v1.1.4'; // نسخه کش را بالا بردم تا تغییرات جدید اعمال شود
 
 const ASSETS = [
   './',
