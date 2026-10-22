@@ -1,7 +1,7 @@
 // ========================
 // تنظیمات نسخه و بروزرسانی
 // ========================
-const APP_VERSION = '1.4.2'; 
+const APP_VERSION = '1.4.4'; 
 const CURRENT_VER_KEY = 'viraasti_app_version';
 
 function checkForUpdate() {
@@ -465,7 +465,7 @@ function renderMessages() {
 }
 
 // ========================
-// صفحه چت (با نمایش آیدی و تیک آبی)
+// صفحه چت اختصاصی (اصلاح شده: راست‌چین و کلیک‌پذیر)
 // ========================
 function openChat(senderHandle) {
     activeChatUser = senderHandle;
@@ -493,7 +493,7 @@ function openChat(senderHandle) {
         }).join('');
     }
 
-    // به‌روزرسانی هدر چت با آیدی و تیک آبی
+    // تنظیمات هدر چت (راست‌چین کردن و اضافه کردن تیک آبی و آیدی)
     document.getElementById('chat-header-name').textContent = uInfo.name;
     document.getElementById('chat-header-handle').textContent = uInfo.handle;
     
@@ -558,6 +558,9 @@ document.getElementById('chat-upload-image').addEventListener('change', (e) => {
     }
 });
 
+// ========================
+// منوی سه نقطه (Bottom Sheet)
+// ========================
 function openPostOptions(e, id) {
     e.stopPropagation();
     const post = [...state.posts, ...state.aiPosts].find(p => p.id == id);
