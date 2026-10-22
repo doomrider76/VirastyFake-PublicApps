@@ -1,4 +1,4 @@
-const CACHE_NAME = 'viraasti-v1.1.19'; // نسخه کش را بالا بردم تا تغییرات جدید اعمال شود
+const CACHE_NAME = 'viraasti-v1.0.0'; 
 
 const ASSETS = [
   './',
@@ -39,6 +39,26 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   
+  // استراتژی شبکه اول (Network First) برای درخواست‌های HTML و ناوبری
+  if (e.request.mode === 'navigate' || (e.request.headers.get('accept') && e.request.headers.get('accept').includes('text/html'))) {
+    e.respondWith(
+      fetch(e.request)
+        .then(networkResponse => {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(e.request, responseToCache));
+          return networkResponse;
+        })
+        .catch(() => {
+          return caches.match(e.request).then(cachedResponse => {
+            if (cachedResponse) return cachedResponse;
+            return caches.match('./index.html');
+          });
+        })
+    );
+    return;
+  }
+
+  // استراتژی کش اول (Cache First) برای فایل‌های استاتیک مثل CSS، JS و عکس‌ها
   e.respondWith(
     caches.match(e.request).then(cachedResponse => {
       if (cachedResponse) return cachedResponse;
@@ -53,6 +73,7 @@ self.addEventListener('fetch', e => {
         });
         return networkResponse;
       }).catch(() => {
+        // در صورت قطعی اینترنت، اگر فایل کش شده نبود، به صفحه اصلی برگرد
         return caches.match('./index.html');
       });
     })
