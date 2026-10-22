@@ -1,4 +1,42 @@
 // ========================
+// تنظیمات نسخه و بروزرسانی
+// ========================
+const APP_VERSION = '1.1.1'; 
+const CURRENT_VER_KEY = 'viraasti_app_version';
+
+function checkForUpdate() {
+    const savedVer = localStorage.getItem(CURRENT_VER_KEY);
+    if (savedVer !== APP_VERSION) {
+        setTimeout(() => {
+            document.getElementById('update-modal').classList.add('show');
+        }, 1000);
+    }
+}
+
+document.getElementById('btn-do-update').addEventListener('click', async () => {
+    const modal = document.getElementById('update-modal');
+    modal.classList.remove('show'); 
+    
+    localStorage.setItem(CURRENT_VER_KEY, APP_VERSION);
+    
+    setTimeout(async () => {
+        if ('caches' in window) {
+            const cacheNames = await caches.keys();
+            for (let name of cacheNames) await caches.delete(name);
+        }
+        if ('serviceWorker' in navigator) {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (let registration of registrations) await registration.unregister();
+        }
+        window.location.href = window.location.pathname + '?v=' + Date.now();
+    }, 400); 
+});
+
+document.getElementById('btn-dismiss-update').addEventListener('click', () => {
+    document.getElementById('update-modal').classList.remove('show');
+});
+
+// ========================
 // تنظیمات ذخیره‌سازی
 // ========================
 const KEY = 'viraasti_v1';
@@ -8,27 +46,42 @@ const DEFAULT_AVATAR = 'https://ui-avatars.com/api/?name=User&background=1d9bf0&
 const DEFAULT_HEADER = 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1500&h=500&fit=crop';
 
 // ========================
-// تنظیمات ایموجی‌های ویندوز ۱۱ (Fluent Emoji)
+// ایموجی‌های ویندوز ۱۱ (Fluent Emoji)
 // ========================
 const emojiMap = {
-    '❤️': 'https://api.iconify.design/fluent-emoji/red-heart.svg',
-    '👍': 'https://api.iconify.design/fluent-emoji/thumbs-up.svg',
-    '😂': 'https://api.iconify.design/fluent-emoji/face-with-tears-of-joy.svg',
-    '🔥': 'https://api.iconify.design/fluent-emoji/fire.svg',
-    '😮': 'https://api.iconify.design/fluent-emoji/face-with-open-mouth.svg'
+    '❤️': 'red-heart', '👍': 'thumbs-up', '😂': 'face-with-tears-of-joy', '🔥': 'fire', '😮': 'face-with-open-mouth',
+    '🤖': 'robot', '🎥': 'movie-camera', '🚀': 'rocket', '😊': 'smiling-face-with-smiling-eyes', '🙏': 'folded-hands',
+    '😍': 'smiling-face-with-heart-eyes', '😎': 'smiling-face-with-sunglasses', '😭': 'loudly-crying-face', '🤔': 'thinking-face',
+    '👏': 'clapping-hands', '✨': 'sparkles', '💯': 'hundred-points', '🎉': 'party-popper', '💔': 'broken-heart', '🙄': 'face-with-rolling-eyes',
+    '😢': 'crying-face', '😡': 'pouting-face', '👀': 'eyes', '🙈': 'see-no-evil-monkey',
+    '👌': 'ok-hand', '✌️': 'victory-hand', '🤝': 'handshake', '💪': 'flexed-biceps', '🙌': 'raising-hands',
+    '🌟': 'glowing-star', '⚡': 'high-voltage', '💥': 'collision', '🌈': 'rainbow', '☀️': 'sun',
+    '🌙': 'crescent-moon', '☁️': 'cloud', '🌧️': 'cloud-with-rain', '❄️': 'snowflake', '🍕': 'pizza',
+    '🍔': 'hamburger', '☕': 'hot-beverage', '🍎': 'red-apple', '⚽': 'soccer-ball', '🏆': 'trophy',
+    '💻': 'laptop', '📱': 'mobile-phone', '💡': 'light-bulb', '📌': 'pushpin', '🔗': 'link'
 };
 
+function parseEmojis(text) {
+    if (!text) return '';
+    let parsed = text;
+    for (const [emoji, name] of Object.entries(emojiMap)) {
+        const imgTag = `<img src="https://api.iconify.design/fluent-emoji/${name}.svg" class="emoji-img" alt="${emoji}">`;
+        parsed = parsed.split(emoji).join(imgTag);
+    }
+    return parsed;
+}
+
 function getEmojiImg(emoji, size = '18px') {
-    const url = emojiMap[emoji];
-    if (!url) return `<span>${emoji}</span>`; 
-    return `<img src="${url}" style="width: ${size}; height: ${size}; object-fit: contain; vertical-align: middle;" alt="${emoji}">`;
+    const name = emojiMap[emoji];
+    if (!name) return `<span>${emoji}</span>`; 
+    return `<img src="https://api.iconify.design/fluent-emoji/${name}.svg" style="width: ${size}; height: ${size}; object-fit: contain; vertical-align: middle;" alt="${emoji}">`;
 }
 
 let state = {
     user: {
-        name: 'کاربر ویراستی',
+        name: 'کاربر Virasty',
         handle: '@user_viraasti',
-        bio: 'به ویراستی خوش آمدید!',
+        bio: 'به Virasty خوش آمدید!',
         joinedDate: 'فروردین ۱۴۰۳',
         followers: 100,
         following: 50,
@@ -112,7 +165,7 @@ if (state.aiPosts.length === 0) {
             myReaction: null, liked: false, retweeted: false, bookmarked: false
         },
         {
-            id: 'ai2', author: 'هوش مصنوعی ویراستی', handle: '@ViraastiAI',
+            id: 'ai2', author: 'هوش مصنوعی Virasty', handle: '@ViraastiAI',
             avatar: 'https://ui-avatars.com/api/?name=AI&background=8b5cf6&color=fff',
             isVerified: true, ts: now - (5 * 60 * 60 * 1000),
             text: 'به نظر شما مهم‌ترین تأثیر هوش مصنوعی بر شبکه‌های اجتماعی در سال آینده چه خواهد بود؟ 🤖',
@@ -191,7 +244,7 @@ function createPostHTML(post) {
         const hasVoted = post.poll.votedIndex !== null;
         
         pollHTML = `<div class="poll-container" onclick="event.stopPropagation();">
-            <div class="poll-question">${post.poll.question}</div>`;
+            <div class="poll-question">${parseEmojis(post.poll.question)}</div>`;
             
         post.poll.options.forEach((opt, index) => {
             const percent = totalVotes === 0 ? 0 : Math.round((opt.votes / totalVotes) * 100);
@@ -202,7 +255,7 @@ function createPostHTML(post) {
                 <div class="poll-option ${selectedClass}" onclick="votePoll(event, '${post.id}', ${index})">
                     <div class="poll-progress" style="width: ${hasVoted ? percent : 0}%"></div>
                     <div class="poll-option-content">
-                        <span class="poll-option-text">${opt.text} ${isSelected ? '✓' : ''}</span>
+                        <span class="poll-option-text">${parseEmojis(opt.text)} ${isSelected ? '✓' : ''}</span>
                         ${hasVoted ? `<span class="poll-option-percent">${percent.toLocaleString('fa-IR')}%</span>` : ''}
                     </div>
                 </div>
@@ -218,13 +271,13 @@ function createPostHTML(post) {
             <div class="post-content">
                 <div class="post-header">
                     <div style="display:flex; align-items:center; gap:6px; flex:1; overflow:hidden;">
-                        <span class="post-name" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${post.author} ${verifiedIcon}</span>
+                        <span class="post-name" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${parseEmojis(post.author)} ${verifiedIcon}</span>
                         <span class="post-handle" style="white-space:nowrap;">${post.handle}</span>
                         <span class="post-time" style="white-space:nowrap;">· ${timeStr}</span>
                     </div>
                     ${followBtnHTML}
                 </div>
-                <div class="post-text">${post.text}</div>
+                <div class="post-text">${parseEmojis(post.text)}</div>
                 ${post.image ? `<img src="${post.image}" class="post-img" alt="Post Image">` : ''}
                 
                 ${pollHTML}
@@ -316,7 +369,7 @@ function renderAccountList() {
             <div class="account-info">
                 <img src="${u.avatar || DEFAULT_AVATAR}" class="account-avatar">
                 <div class="account-details">
-                    <span class="account-name">${u.name}</span>
+                    <span class="account-name">${parseEmojis(u.name)}</span>
                     <span class="account-handle">${u.handle}</span>
                 </div>
             </div>
@@ -365,7 +418,7 @@ function votePoll(e, id, optionIndex) {
     const post = [...state.posts, ...state.aiPosts].find(p => p.id == id);
     if (!post || !post.poll) return;
     
-    if (post.poll.votedIndex !== null) return; // اگر قبلا رای داده، کاری نکن
+    if (post.poll.votedIndex !== null) return; 
     
     post.poll.options[optionIndex].votes += 1;
     post.poll.votedIndex = optionIndex;
@@ -467,7 +520,10 @@ function switchHomeTab(tab) {
 function switchView(viewName) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     const target = document.getElementById(`view-${viewName}`);
-    if(target) target.classList.add('active');
+    if(target) {
+        target.classList.add('active');
+        target.scrollTop = 0;
+    }
     
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     const navIndex = ['home', 'search', 'notifications', 'bookmarks', 'profile'].indexOf(viewName);
@@ -494,7 +550,11 @@ function goBack() {
         currentViewStack.pop();
         const prev = currentViewStack[currentViewStack.length - 1];
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-        document.getElementById(`view-${prev}`).classList.add('active');
+        const target = document.getElementById(`view-${prev}`);
+        if(target) {
+            target.classList.add('active');
+            target.scrollTop = 0;
+        }
         
         const topTabs = document.getElementById('home-tabs-container');
         const header = document.getElementById('main-header');
@@ -523,13 +583,13 @@ function renderProfile() {
     const verifiedIcon = u.isVerified ? `<img src="blue-tick.png" class="verified-icon lg" alt="verified">` : '';
     
     const nameEl = document.getElementById('profile-name');
-    if(nameEl) nameEl.innerHTML = `${u.name} ${verifiedIcon}`;
+    if(nameEl) nameEl.innerHTML = `${parseEmojis(u.name)} ${verifiedIcon}`;
     
     const handleEl = document.getElementById('profile-handle');
     if(handleEl) handleEl.textContent = u.handle;
     
     const bioEl = document.getElementById('profile-bio');
-    if(bioEl) bioEl.textContent = u.bio;
+    if(bioEl) bioEl.innerHTML = parseEmojis(u.bio);
     
     const folEl = document.getElementById('profile-followers');
     if(folEl) folEl.textContent = (u.followers || 0).toLocaleString('fa-IR');
@@ -563,7 +623,7 @@ function renderPostDetail(id) {
         const hasVoted = post.poll.votedIndex !== null;
         
         pollHTML = `<div class="poll-container" style="margin-top: 16px;">
-            <div class="poll-question">${post.poll.question}</div>`;
+            <div class="poll-question">${parseEmojis(post.poll.question)}</div>`;
             
         post.poll.options.forEach((opt, index) => {
             const percent = totalVotes === 0 ? 0 : Math.round((opt.votes / totalVotes) * 100);
@@ -574,7 +634,7 @@ function renderPostDetail(id) {
                 <div class="poll-option ${selectedClass}" onclick="votePoll(event, '${post.id}', ${index})">
                     <div class="poll-progress" style="width: ${hasVoted ? percent : 0}%"></div>
                     <div class="poll-option-content">
-                        <span class="poll-option-text">${opt.text} ${isSelected ? '✓' : ''}</span>
+                        <span class="poll-option-text">${parseEmojis(opt.text)} ${isSelected ? '✓' : ''}</span>
                         ${hasVoted ? `<span class="poll-option-percent">${percent.toLocaleString('fa-IR')}%</span>` : ''}
                     </div>
                 </div>
@@ -589,10 +649,10 @@ function renderPostDetail(id) {
             <div class="post-avatar"><img src="${post.avatar}"></div>
             <div class="post-content">
                 <div class="post-header">
-                    <span class="post-name">${post.author} ${verifiedIcon}</span>
+                    <span class="post-name">${parseEmojis(post.author)} ${verifiedIcon}</span>
                     <span class="post-handle">${post.handle}</span>
                 </div>
-                <div class="post-text" style="font-size:18px; margin-top:8px;">${post.text}</div>
+                <div class="post-text" style="font-size:18px; margin-top:8px;">${parseEmojis(post.text)}</div>
                 ${post.image ? `<img src="${post.image}" class="post-img" style="margin-top:12px;">` : ''}
                 ${pollHTML}
                 <div style="color:var(--text-secondary); font-size:14px; margin-top:16px;">${timeStr} · ${post.stats.views} بازدید</div>
@@ -619,7 +679,6 @@ document.getElementById('btn-compose').addEventListener('click', () => {
     document.getElementById('compose-image-preview').style.display = 'none';
     document.getElementById('compose-avatar').src = state.user.avatar || DEFAULT_AVATAR;
     
-    // ریست کردن حالت نظرسنجی
     document.getElementById('compose-poll-container').style.display = 'none';
     document.getElementById('poll-question').value = '';
     document.getElementById('poll-options-list').innerHTML = `
@@ -658,27 +717,43 @@ document.getElementById('btn-add-poll-option').addEventListener('click', () => {
     list.appendChild(input);
 });
 
-function compressImage(file, maxWidth, maxHeight, callback) {
+// تابع پیشرفته فشرده‌سازی و برش عکس
+function compressImage(file, maxWidth, maxHeight, callback, cropRatio = null) {
     const reader = new FileReader();
     reader.onload = (e) => {
         const img = new Image();
         img.onload = () => {
             const canvas = document.createElement('canvas');
-            let width = img.width;
-            let height = img.height;
+            const ctx = canvas.getContext('2d');
+            
+            let sourceX = 0, sourceY = 0, sourceWidth = img.width, sourceHeight = img.height;
 
-            if (width > maxWidth || height > maxHeight) {
-                const ratio = Math.min(maxWidth / width, maxHeight / height);
-                width *= ratio;
-                height *= ratio;
+            if (cropRatio) {
+                const imgRatio = img.width / img.height;
+                if (imgRatio > cropRatio) {
+                    sourceWidth = img.height * cropRatio;
+                    sourceX = (img.width - sourceWidth) / 2;
+                } else if (imgRatio < cropRatio) {
+                    sourceHeight = img.width / cropRatio;
+                    sourceY = (img.height - sourceHeight) / 2;
+                }
             }
 
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, width, height);
+            let targetWidth = sourceWidth;
+            let targetHeight = sourceHeight;
+
+            if (targetWidth > maxWidth || targetHeight > maxHeight) {
+                const ratio = Math.min(maxWidth / targetWidth, maxHeight / targetHeight);
+                targetWidth *= ratio;
+                targetHeight *= ratio;
+            }
+
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+
+            ctx.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, targetWidth, targetHeight);
             
-            callback(canvas.toDataURL('image/jpeg', 0.8));
+            callback(canvas.toDataURL('image/jpeg', 0.85));
         };
         img.src = e.target.result;
     };
@@ -706,7 +781,7 @@ document.addEventListener('change', (e) => {
                     <label for="upload-avatar" class="edit-avatar-btn"><svg><use href="#i-image"/></svg></label>
                     <input type="file" id="upload-avatar" accept="image/*" hidden>
                 `;
-            });
+            }, 1.0); 
         }
     }
     if (e.target && e.target.id === 'upload-cover') {
@@ -715,7 +790,7 @@ document.addEventListener('change', (e) => {
             compressImage(file, 1500, 500, (base64) => {
                 tempCover = base64;
                 document.getElementById('edit-cover-preview').style.backgroundImage = `url('${base64}')`;
-            });
+            }, 3.0); 
         }
     }
 });
@@ -775,15 +850,13 @@ document.getElementById('btn-submit-post').addEventListener('click', () => {
     switchView('home');
     renderFeeds();
 
-    // ====== شبیه‌سازی هوش مصنوعی ======
-    // هوش مصنوعی ۲ ثانیه بعد به نظرسنجی شما رای می‌دهد
+    // شبیه‌سازی هوش مصنوعی
     if (pollData) {
         setTimeout(() => {
             const postToVote = state.posts.find(p => p.id === newPost.id);
             if (postToVote && postToVote.poll && postToVote.poll.votedIndex === null) {
-                // انتخاب یک گزینه تصادفی توسط هوش مصنوعی
                 const randomIndex = Math.floor(Math.random() * postToVote.poll.options.length);
-                postToVote.poll.options[randomIndex].votes += Math.floor(Math.random() * 20) + 5; // رای‌های اولیه از سمت AI
+                postToVote.poll.options[randomIndex].votes += Math.floor(Math.random() * 20) + 5;
                 save();
                 renderFeeds();
             }
@@ -905,7 +978,7 @@ document.getElementById('btn-create-account').addEventListener('click', () => {
     const newUser = {
         name: name,
         handle: handle,
-        bio: 'به ویراستی خوش آمدید!',
+        bio: 'به Virasty خوش آمدید!',
         joinedDate: 'فروردین ۱۴۰۳',
         followers: 0,
         following: 0,
@@ -962,4 +1035,5 @@ document.addEventListener('DOMContentLoaded', () => {
     renderFeeds();
     renderProfile();
     switchHomeTab('following');
+    checkForUpdate();
 });
