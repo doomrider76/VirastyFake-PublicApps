@@ -76,7 +76,7 @@
 
     <!-- لیست پیام‌ها (دایرکت) -->
     <main id="view-messages" class="view">
-        <header class="sub-header">
+        <header class="floating-sub-header">
             <button type="button" class="icon-btn" onclick="goBack()"><svg><use href="#i-back"/></svg></button>
             <span class="view-title-sm">دایرکت (پیام‌ها)</span>
         </header>
@@ -85,17 +85,25 @@
 
     <!-- صفحه چت اختصاصی -->
     <main id="view-chat" class="view">
-        <header class="sub-header">
-            <button type="button" class="icon-btn" onclick="switchView('messages')"><svg><use href="#i-back"/></svg></button>
-            <div style="display:flex; align-items:center; gap:8px;">
-                <img src="Logo.png" id="chat-header-avatar" style="width:30px; height:30px; border-radius:50%;">
-                <span class="view-title-sm" id="chat-header-name">پشتیبانی ویراستی</span>
+        <header class="floating-sub-header">
+            <div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="openUserProfile(activeChatUser)">
+                <button type="button" class="icon-btn" onclick="event.stopPropagation(); switchView('messages')"><svg><use href="#i-back"/></svg></button>
+                <img src="Logo.png" id="chat-header-avatar" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border: 2px solid var(--border-color);">
+                <div style="display:flex; flex-direction:column;">
+                    <div style="display:flex; align-items:center; gap:4px;">
+                        <span class="view-title-sm" id="chat-header-name" style="font-size:16px;">پشتیبانی ویراستی</span>
+                        <img src="blue-tick.png" id="chat-header-tick" class="verified-icon" style="display:none; margin-right:2px;">
+                    </div>
+                    <span id="chat-header-handle" style="font-size:13px; color:var(--text-secondary);">@support</span>
+                </div>
             </div>
         </header>
         <div id="chat-messages" class="chat-container"></div>
         <div class="chat-input-area">
             <input type="text" placeholder="پیام خود را بنویسید..." id="chat-input">
-            <button type="button" class="icon-btn" style="color: var(--accent-color);"><svg><use href="#i-send"/></svg></button>
+            <label for="chat-upload-image" class="icon-btn"><svg><use href="#i-image"/></svg></label>
+            <input type="file" id="chat-upload-image" accept="image/*" hidden>
+            <button type="button" class="icon-btn" id="btn-send-chat"><svg><use href="#i-send"/></svg></button>
         </div>
     </main>
 
@@ -138,6 +146,14 @@
         <div id="profile-feed"></div>
     </main>
 
+    <main id="view-user-profile" class="view">
+        <header class="floating-sub-header">
+            <button type="button" class="icon-btn" onclick="goBack()"><svg><use href="#i-back"/></svg></button>
+            <span class="view-title-sm">پروفایل کاربر</span>
+        </header>
+        <div id="user-profile-content"></div>
+    </main>
+
     <main id="view-post-detail" class="view">
         <header class="sub-header">
             <button type="button" class="icon-btn" onclick="goBack()"><svg><use href="#i-back"/></svg></button>
@@ -146,8 +162,9 @@
         <div id="post-detail-content"></div>
     </main>
 
+    <!-- تنظیمات -->
     <main id="view-settings" class="view">
-        <header class="sub-header">
+        <header class="floating-sub-header">
             <button type="button" class="icon-btn" onclick="goBack()"><svg><use href="#i-back"/></svg></button>
             <span class="view-title-sm">تنظیمات</span>
         </header>
@@ -159,8 +176,8 @@
     </main>
 
     <button type="button" class="fab" id="btn-compose">
-        <svg style="width: 20px; height: 20px; margin-left: 6px;"><use href="#i-pen"/></svg>
-        <span>نوشتن</span>
+        <svg style="width: 20px; height: 20px; margin-left: 6px;"><use href="#i-pen" id="fab-icon"/></svg>
+        <span id="fab-text">نوشتن</span>
     </button>
 
     <nav class="bottom-nav">
@@ -207,6 +224,23 @@
                     <input type="file" id="upload-image" accept="image/*" hidden>
                     <button type="button" class="icon-btn" id="btn-toggle-poll" style="display:inline-flex; margin-right: 8px;"><svg><use href="#i-chart"/></svg></button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال پیام جدید -->
+    <div class="modal-overlay" id="new-chat-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="icon-btn close-modal"><svg><use href="#i-close"/></svg></button>
+                <span class="modal-title">ارسال پیام شخصی</span>
+                <button type="button" class="btn-primary" onclick="startNewChat()">شروع چت</button>
+            </div>
+            <div class="edit-form">
+                <label>جستجوی نام کاربری (آیدی)</label>
+                <input type="text" id="new-chat-search" placeholder="مثلا @user_viraasti" dir="ltr" style="text-align:left;">
+                <p style="font-size:12px; color:var(--text-secondary); margin-top:8px;">یا از لیست زیر انتخاب کنید:</p>
+                <div id="new-chat-list" style="margin-top: 12px; max-height: 40vh; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;"></div>
             </div>
         </div>
     </div>
@@ -304,9 +338,9 @@
             <h2>Virasty بروز شد!</h2>
             <p>نسخه جدید با امکانات و تغییرات زیر در دسترس شماست:</p>
             <ul class="changelog">
-                <li><img src="https://api.iconify.design/fluent-emoji/sparkles.svg" class="emoji-img" alt="✨"> اضافه شدن صفحه چت اختصاصی و نشانگر پیام‌های خوانده نشده</li>
-                <li><img src="https://api.iconify.design/fluent-emoji/wrench.svg" class="emoji-img" alt="🔧"> رفع مشکل فاصله منوی پایین و چسبیدن به لبه گوشی</li>
-                <li><img src="https://api.iconify.design/fluent-emoji/bar-chart.svg" class="emoji-img" alt="📊"> امکان حذف ویراست‌های شخصی</li>
+                <li><img src="https://api.iconify.design/fluent-emoji/sparkles.svg" class="emoji-img" alt="✨"> بازگشت هدر دایرکت و چت به حالت شیشه‌ای شناور</li>
+                <li><img src="https://api.iconify.design/fluent-emoji/wrench.svg" class="emoji-img" alt="🔧"> راست‌چین شدن اطلاعات کاربر در صفحه چت</li>
+                <li><img src="https://api.iconify.design/fluent-emoji/rocket.svg" class="emoji-img" alt="🚀"> قابلیت کلیک روی پروفایل از داخل صفحه چت</li>
             </ul>
             <div class="update-actions">
                 <button class="btn-primary" id="btn-do-update">بروزرسانی کن</button>
