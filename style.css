@@ -69,7 +69,6 @@ svg { width: 24px; height: 24px; }
 .view { height: 100vh; height: 100dvh; padding-top: calc(12px + var(--header-height) + 5px + var(--header-height) + 5px); padding-bottom: 80px; overflow-y: auto; display: none; background-color: var(--bg-color); overscroll-behavior-y: contain; }
 .view.active { display: block; }
 
-/* تنظیمات فاصله برای صفحات جدید */
 #view-search, #view-messages, #view-notifications, #view-bookmarks, #view-settings { padding-top: calc(12px + var(--header-height) + 5px) !important; padding-bottom: 80px; }
 #view-user-profile { padding-top: 0 !important; padding-bottom: 80px; }
 #view-profile { padding-top: 0; }
@@ -99,7 +98,7 @@ svg { width: 24px; height: 24px; }
 .post-more-btn:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
 .post-more-btn svg { width: 20px; height: 20px; }
 
-.verified-icon { width: 20px; height: 20px; object-fit: contain; display: inline-block; vertical-align: middle; margin-right: 2px; }
+.verified-icon { width: 20px; height: 20px; object-fit: contain; display: inline-block; vertical-align: middle; margin-right: 0px; }
 .verified-icon.lg { width: 26px; height: 26px; }
 .emoji-img { width: 1.2em; height: 1.2em; vertical-align: -0.2em; margin: 0 2px; display: inline-block; }
 .mention { color: var(--accent-color); font-weight: 600; cursor: pointer; direction: ltr; display: inline-block; }
@@ -144,7 +143,6 @@ svg { width: 24px; height: 24px; }
 .action-btn.bookmarked { color: var(--accent-color); }
 .action-btn.bookmarked svg { fill: var(--accent-color); stroke: var(--accent-color); }
 
-/* هدر پروفایل (کاور) */
 .cover-photo { height: 180px; background-size: cover; background-position: center; background-color: #0d151c; position: relative; border-radius: 0; overflow: hidden; }
 .back-btn { position: absolute; top: 16px; right: 16px; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); color: white; z-index: 2; }
 .profile-actions-row { display: flex; justify-content: space-between; align-items: flex-end; padding: 0 16px; margin-top: 0; position: relative; min-height: 60px; }
@@ -153,7 +151,7 @@ svg { width: 24px; height: 24px; }
 .btn-edit-profile { background: transparent; border: 1px solid var(--border-color); padding: 8px 16px; border-radius: 20px; font-weight: 700; font-size: 14px; margin-bottom: 8px; color: var(--text-primary); }
 .btn-edit-profile:hover { background: rgba(255,255,255,0.1); }
 .profile-info { padding: 12px 16px 16px; background-color: var(--bg-color); }
-.profile-name { font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+.profile-name { font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 2px; }
 .profile-handle { color: var(--text-secondary); font-size: 15px; }
 .profile-bio { font-size: 15px; margin-top: 12px; line-height: 1.6; white-space: pre-wrap; }
 .profile-stats { display: flex; gap: 16px; margin-top: 12px; font-size: 15px; color: var(--text-secondary); }
@@ -164,6 +162,13 @@ svg { width: 24px; height: 24px; }
 .profile-tabs::-webkit-scrollbar { display: none; }
 .ptab { padding: 8px 16px; border-radius: 20px; font-weight: 700; font-size: 15px; color: var(--text-secondary); background: transparent; white-space: nowrap; border: 1px solid transparent; }
 .ptab.active { color: var(--text-primary); background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.1); }
+
+.btn-follow-profile { background: var(--text-primary); color: var(--bg-color); padding: 8px 16px; border-radius: 20px; font-weight: 800; font-size: 14px; margin-bottom: 8px; transition: all 0.2s; cursor: pointer; border: 1px solid var(--text-primary); }
+.btn-follow-profile:hover { opacity: 0.8; }
+.btn-follow-profile.following { background: transparent; color: var(--text-primary); border-color: var(--border-color); }
+.btn-follow-profile.following:hover { background: rgba(249, 24, 128, 0.1); color: #f91880; border-color: #f91880; }
+.btn-follow-profile.following:hover::after { content: 'لغو دنبال کردن'; }
+.btn-follow-profile.following:hover span { display: none; }
 
 .fab { position: fixed; bottom: 82px; left: 16px; background: var(--accent-color); color: white; display: flex; align-items: center; gap: 6px; padding: 12px 20px; border-radius: 30px; font-weight: 800; font-size: 16px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); z-index: 90; transition: transform 0.2s; }
 .fab:active { transform: scale(0.92); }
@@ -176,55 +181,28 @@ svg { width: 24px; height: 24px; }
 .nav-item.active svg { stroke: var(--accent-color); }
 .nav-badge { position: absolute; top: 2px; right: 4px; background: #f91880; color: white; font-size: 10px; font-weight: 900; border-radius: 10px; padding: 1px 5px; min-width: 16px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
 
-/* تنظیمات و اعلانات */
 .settings-section { padding: 16px; }
 .account-card { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 16px; margin-bottom: 8px; cursor: pointer; }
 .account-card.active { border: 1px solid var(--accent-color); background: rgba(29, 155, 240, 0.05); }
 .account-info { display: flex; align-items: center; gap: 12px; }
 .account-avatar { width: 40px; height: 40px; border-radius: 40%; object-fit: cover; }
 .account-details { display: flex; flex-direction: column; }
-.account-name { font-weight: 700; font-size: 15px; }
+.account-name { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 2px; }
 .account-handle { font-size: 13px; color: var(--text-secondary); }
 .btn-switch { padding: 6px 12px; border-radius: 16px; background: var(--accent-color); color: white; font-size: 13px; font-weight: 700; }
 .btn-active-label { font-size: 13px; color: var(--accent-color); font-weight: 700; }
 
-/* استایل لیست اعلانات (شبیه به دایرکت) */
-.notification-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 16px;
-    border-bottom: 1px solid var(--border-color);
-    background-color: var(--bg-color);
-    transition: background 0.2s;
-    cursor: pointer;
-}
+.notification-item { display: flex; align-items: center; gap: 12px; padding: 16px; border-bottom: 1px solid var(--border-color); background-color: var(--bg-color); transition: background 0.2s; cursor: pointer; }
 .notification-item:hover { background: rgba(255,255,255,0.03); }
-.notification-icon {
-    width: 44px; height: 44px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    background: rgba(29, 155, 240, 0.1);
-    color: var(--accent-color);
-    flex-shrink: 0;
-}
+.notification-icon { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(29, 155, 240, 0.1); color: var(--accent-color); flex-shrink: 0; }
 .notification-icon svg { width: 22px; height: 22px; }
 .notification-content { flex: 1; }
 .notification-text { font-size: 15px; line-height: 1.5; color: var(--text-primary); }
 .notification-text b { font-weight: 800; }
 .notification-time { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+#view-search .floating-sub-header input { color: var(--text-primary); caret-color: var(--accent-color); }
+#view-search .floating-sub-header input::placeholder { color: var(--text-secondary); opacity: 0.8; }
 
-/* استایل باکس جستجو در هدر */
-#view-search .floating-sub-header input {
-    color: var(--text-primary);
-    caret-color: var(--accent-color);
-}
-#view-search .floating-sub-header input::placeholder {
-    color: var(--text-secondary);
-    opacity: 0.8;
-}
-
-/* مودال‌ها */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 2000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; padding: 16px; }
 .modal-overlay.show { opacity: 1; pointer-events: auto; }
 .modal-content { background: var(--bg-color); border: 1px solid var(--border-color); width: 100%; max-width: 500px; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; transform: translateY(20px); transition: transform 0.3s; }
@@ -283,7 +261,7 @@ svg { width: 24px; height: 24px; }
 .dm-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); }
 .dm-content { flex: 1; }
 .dm-header { display: flex; justify-content: space-between; margin-bottom: 4px; }
-.dm-name { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 4px; }
+.dm-name { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 2px; }
 .dm-time { font-size: 12px; color: var(--text-secondary); }
 .dm-text { font-size: 14px; color: var(--text-secondary); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
@@ -304,7 +282,7 @@ svg { width: 24px; height: 24px; }
 .new-chat-user:hover { background: rgba(255,255,255,0.1); }
 .new-chat-user img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
 .new-chat-user-info { display: flex; flex-direction: column; }
-.new-chat-user-name { font-weight: 700; font-size: 14px; color: var(--text-primary); }
+.new-chat-user-name { font-weight: 700; font-size: 14px; color: var(--text-primary); display: flex; align-items: center; gap: 2px; }
 .new-chat-user-handle { font-size: 12px; color: var(--text-secondary); }
 
 #update-modal { align-items: flex-end; padding: 0; }
@@ -320,6 +298,66 @@ svg { width: 24px; height: 24px; }
 .changelog .emoji-img { margin-top: 4px; flex-shrink: 0; }
 .update-actions { display: flex; gap: 12px; justify-content: center; }
 .update-actions button { flex: 1; padding: 14px; font-size: 16px; border-radius: 16px; }
+
+/* سیستم اعلانات شناور داخلی (Toast) */
+#toast-container {
+    position: fixed;
+    bottom: 90px; /* بالای منوی پایین */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+    width: 90%;
+    max-width: 400px;
+}
+
+.toast {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
+    padding: 14px 20px;
+    border-radius: 16px;
+    font-size: 15px;
+    font-weight: 700;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    pointer-events: auto;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.toast.success {
+    border-color: rgba(0, 186, 124, 0.4);
+    color: #00ba7c;
+    background: rgba(0, 186, 124, 0.1);
+}
+
+.toast.error {
+    border-color: rgba(249, 24, 128, 0.4);
+    color: #f91880;
+    background: rgba(249, 24, 128, 0.1);
+}
+
+.toast.info {
+    border-color: rgba(29, 155, 240, 0.4);
+    color: var(--accent-color);
+    background: rgba(29, 155, 240, 0.1);
+}
 
 @media (max-width: 380px) {
     .post-avatar { width: 40px; height: 40px; }
