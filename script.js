@@ -1,7 +1,7 @@
 // ========================
 // تنظیمات نسخه و بروزرسانی
 // ========================
-const APP_VERSION = '1.5.2'; 
+const APP_VERSION = '1.0.0'; 
 const CURRENT_VER_KEY = 'viraasti_app_version';
 
 function checkForUpdate() {
@@ -33,6 +33,29 @@ document.getElementById('btn-do-update').addEventListener('click', async () => {
 document.getElementById('btn-dismiss-update').addEventListener('click', () => {
     document.getElementById('update-modal').classList.remove('show');
 });
+
+// ========================
+// سیستم اعلانات داخلی (Toast)
+// ========================
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    
+    container.appendChild(toast);
+    
+    // انیمیشن ورود
+    setTimeout(() => toast.classList.add('show'), 10);
+    
+    // حذف خودکار بعد از ۳ ثانیه
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
 
 // ========================
 // تنظیمات ذخیره‌سازی
@@ -132,7 +155,7 @@ let isPollMode = false;
 let editingPostId = null; 
 let currentWarnPostId = null; 
 let activeChatUser = null; 
-let composeSelectedAccount = null; // اکانت انتخاب شده برای نوشتن
+let composeSelectedAccount = null; 
 
 // ========================
 // سیستم Load و Save
@@ -257,9 +280,8 @@ function createPostHTML(post) {
             <div class="post-content">
                 <div class="post-header" style="display:flex; flex-direction:column; margin-bottom:6px; width: 100%;">
                     <div style="display:flex; justify-content:space-between; align-items:flex-start; width: 100%; line-height: 1.1;">
-                        <div style="display:flex; align-items:center; gap:4px; overflow:hidden;">
-                            <span class="post-name" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer;" onclick="event.stopPropagation(); openUserProfile('${post.handle}')">${parseAll(post.author)}</span>
-                            ${verifiedIcon}
+                        <div style="display:flex; align-items:center; gap:2px; overflow:hidden;">
+                            <span class="post-name" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer;" onclick="event.stopPropagation(); openUserProfile('${post.handle}')">${parseAll(post.author)}</span>${verifiedIcon}
                         </div>
                         <button type="button" class="post-more-btn" onclick="openPostOptions(event, '${post.id}')" style="margin-right: 0; padding: 0 4px; margin-top: -3px;"><svg style="width: 18px; height: 18px;"><use href="#i-more"/></svg></button>
                     </div>
@@ -296,13 +318,14 @@ function renderFeeds() {
     }
 
     if (displayPosts.length === 0) {
-        document.getElementById('feed').innerHTML = `<div class="empty-state"><h3>هنوز توییتی نیست</h3></div>`;
+        document.getElementById('feed').innerHTML = `<div class="empty-state"><h3>هنوز ویراستی نیست</h3></div>`;
     } else {
         document.getElementById('feed').innerHTML = displayPosts.map(p => createPostHTML(p)).join('');
     }
     
     renderProfileFeed();
     renderMessages();
+    renderNotifications();
 
     const bmarks = [...state.posts, ...state.aiPosts].filter(p => p.bookmarked);
     document.getElementById('bookmarks-feed').innerHTML = bmarks.length > 0 ? bmarks.map(p => createPostHTML(p)).join('') : `<div class="empty-state"><h3>نشانکی ندارید</h3></div>`;
@@ -322,6 +345,34 @@ function renderProfileFeed() {
     if (container) {
         container.innerHTML = filteredPosts.length > 0 ? filteredPosts.map(p => createPostHTML(p)).join('') : `<div class="empty-state"><h3>محتوایی یافت نشد</h3></div>`;
     }
+}
+
+function renderNotifications() {
+    const container = document.getElementById('notifications-list');
+    if (!container) return;
+
+    const dummyNotifications = [
+        { id: 1, type: 'like', text: 'کاربر <b>ورزش۳</b> ویراست شما را لایک کرد.', time: Date.now() - 1000 * 60 * 5 },
+        { id: 2, type: 'reply', text: 'کاربر <b>تکنولوژی روز</b> به ویراست شما پاسخ داد: "عالی بود!"', time: Date.now() - 1000 * 60 * 60 * 2 },
+        { id: 3, type: 'retweet', text: 'کاربر <b>اخبار هوش مصنوعی</b> ویراست شما را بازنشر کرد.', time: Date.now() - 1000 * 60 * 60 * 5 }
+    ];
+
+    container.innerHTML = dummyNotifications.map(n => {
+        let iconHTML = '';
+        if (n.type === 'like') iconHTML = `<svg><use href="#i-heart"/></svg>`;
+        else if (n.type === 'reply') iconHTML = `<svg><use href="#i-reply"/></svg>`;
+        else if (n.type === 'retweet') iconHTML = `<svg><use href="#i-retweet"/></svg>`;
+
+        return `
+            <div class="notification-item">
+                <div class="notification-icon">${iconHTML}</div>
+                <div class="notification-content">
+                    <div class="notification-text">${n.text}</div>
+                    <div class="notification-time">${formatTimeAgo(n.time)}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
 }
 
 function getUserInfo(handle) {
@@ -395,6 +446,7 @@ function openUserProfile(rawHandle) {
 
     const u = getUserInfo(handle);
     const userPosts = [...state.posts, ...state.aiPosts].filter(p => p.handle === handle);
+    const isFollowing = (state.user.followedUsers || []).includes(handle);
     
     content.innerHTML = `
         <div class="profile-section">
@@ -405,9 +457,12 @@ function openUserProfile(rawHandle) {
                 <div class="profile-avatar">
                     <img src="${u.avatar}" alt="Avatar">
                 </div>
+                <button type="button" class="btn-follow-profile ${isFollowing ? 'following' : ''}" onclick="toggleFollow(event, '${u.handle}')">
+                    <span>${isFollowing ? 'دنبال می‌کنید' : 'دنبال کردن'}</span>
+                </button>
             </div>
             <div class="profile-info">
-                <h1 class="profile-name">${parseAll(u.name)} ${u.isVerified ? `<img src="blue-tick.png" class="verified-icon lg">` : ''}</h1>
+                <h1 class="profile-name">${parseAll(u.name)}${u.isVerified ? `<img src="blue-tick.png" class="verified-icon lg">` : ''}</h1>
                 <span class="profile-handle">${u.handle}</span>
                 <p class="profile-bio">${parseAll(u.bio || 'کاربر ویراستی')}</p>
                 <div class="profile-stats">
@@ -425,6 +480,25 @@ function openUserProfile(rawHandle) {
     `;
     
     switchView('user-profile');
+}
+
+function toggleFollow(e, handle) {
+    e.stopPropagation();
+    if (!state.user.followedUsers) state.user.followedUsers = [];
+    
+    const index = state.user.followedUsers.indexOf(handle);
+    if (index > -1) {
+        state.user.followedUsers.splice(index, 1);
+        state.user.following = Math.max(0, (state.user.following || 0) - 1);
+    } else {
+        state.user.followedUsers.push(handle);
+        state.user.following = (state.user.following || 0) + 1;
+    }
+    
+    save();
+    openUserProfile(handle);
+    renderProfile(); 
+    renderFeeds();
 }
 
 function renderMessages() {
@@ -463,7 +537,7 @@ function renderMessages() {
                 <img src="${lastMsg.senderAvatar || uInfo.avatar}" class="dm-avatar" onclick="event.stopPropagation(); openUserProfile('${sender}')" style="object-fit: ${sender === '@support' ? 'contain' : 'cover'}; background: ${sender === '@support' ? 'white' : 'transparent'};">
                 <div class="dm-content" onclick="openChat('${sender}')">
                     <div class="dm-header">
-                        <span class="dm-name" onclick="event.stopPropagation(); openUserProfile('${sender}')">${lastMsg.senderName || uInfo.name} ${lastMsg.isVerified ? `<img src="blue-tick.png" class="verified-icon">` : ''}</span>
+                        <span class="dm-name" onclick="event.stopPropagation(); openUserProfile('${sender}')">${lastMsg.senderName || uInfo.name}${lastMsg.isVerified ? `<img src="blue-tick.png" class="verified-icon">` : ''}</span>
                         <span class="dm-time">${formatTimeAgo(lastMsg.ts)}</span>
                     </div>
                     <div class="dm-text">${parseAll(lastMsg.text)}</div>
@@ -571,14 +645,13 @@ function updateComposeUI() {
     if (!composeSelectedAccount) return;
     document.getElementById('compose-avatar').src = composeSelectedAccount.avatar || DEFAULT_AVATAR;
     
-    // اضافه کردن تیک آبی با سایز خود صفحه ویراست (20px)
-    const tickHTML = composeSelectedAccount.isVerified ? `<img src="blue-tick.png" class="verified-icon" style="width: 20px; height: 20px; margin-right: 4px; vertical-align: middle;">` : '';
-    document.getElementById('compose-account-name').innerHTML = `${parseAll(composeSelectedAccount.name)} ${tickHTML}`;
+    const tickHTML = composeSelectedAccount.isVerified ? `<img src="blue-tick.png" class="verified-icon" style="width: 20px; height: 20px; margin-right: 0px; vertical-align: middle;">` : '';
+    document.getElementById('compose-account-name').innerHTML = `${parseAll(composeSelectedAccount.name)}${tickHTML}`;
     document.getElementById('compose-account-handle').textContent = composeSelectedAccount.handle;
 }
 
 function openComposeAccountSelector() {
-    if (editingPostId) return; // در حالت ویرایش اجازه تغییر اکانت را نمی‌دهیم
+    if (editingPostId) return; 
 
     const container = document.getElementById('compose-account-list');
     const allUsers = [state.user, ...(state.accounts || []).filter(a => a.handle !== state.user.handle)];
@@ -588,7 +661,7 @@ function openComposeAccountSelector() {
             <div class="account-info">
                 <img src="${u.avatar || DEFAULT_AVATAR}" class="account-avatar">
                 <div class="account-details">
-                    <span class="account-name">${parseAll(u.name)} ${u.isVerified ? `<img src="blue-tick.png" class="verified-icon">` : ''}</span>
+                    <span class="account-name">${parseAll(u.name)}${u.isVerified ? `<img src="blue-tick.png" class="verified-icon">` : ''}</span>
                     <span class="account-handle">${u.handle}</span>
                 </div>
             </div>
@@ -663,7 +736,7 @@ function setWarnSender(id) {
     if (post) {
         post.isWarnSender = true;
         save();
-        alert('از این پس پیام‌های اخطار از طرف این پروفایل ارسال می‌شود.');
+        showToast('از این پس پیام‌های اخطار از طرف این پروفایل ارسال می‌شود.', 'info');
     }
 }
 
@@ -673,7 +746,7 @@ function removeWarnSender(id) {
     if (post) {
         post.isWarnSender = false;
         save();
-        alert('اخطار دهنده به حالت پیش‌فرض (شما) بازگشت.');
+        showToast('اخطار دهنده به حالت پیش‌فرض (شما) بازگشت.', 'info');
     }
 }
 
@@ -683,10 +756,10 @@ function editPost(id) {
     if (!post) return;
     
     editingPostId = id;
-    composeSelectedAccount = state.user; // در حالت ویرایش فقط خود کاربر
+    composeSelectedAccount = state.user; 
     updateComposeUI();
     
-    document.getElementById('compose-account-selector').style.pointerEvents = 'none'; // غیرفعال کردن کلیک
+    document.getElementById('compose-account-selector').style.pointerEvents = 'none';
 
     document.getElementById('compose-modal-title').textContent = 'ویرایش ویراست';
     document.getElementById('compose-text').value = post.text;
@@ -723,7 +796,7 @@ function openWarnModal(id) {
 
 document.getElementById('btn-submit-warn').addEventListener('click', () => {
     const reason = document.getElementById('warn-reason').value.trim();
-    if (!reason) { alert('لطفا دلیل را وارد کنید.'); return; }
+    if (!reason) { showToast('لطفا دلیل را وارد کنید.', 'error'); return; }
     
     const post = [...state.posts, ...state.aiPosts].find(p => p.id == currentWarnPostId);
     if (post) {
@@ -749,7 +822,7 @@ document.getElementById('btn-submit-warn').addEventListener('click', () => {
         state.directMessages.unshift(newDM);
         save();
         renderMessages();
-        alert('اخطار با موفقیت ارسال شد.');
+        showToast('اخطار با موفقیت ارسال شد.', 'success');
     }
     
     document.getElementById('warn-modal').classList.remove('show');
@@ -760,14 +833,13 @@ function banUser(id) {
     const post = [...state.posts, ...state.aiPosts].find(p => p.id == id);
     if (!post) return;
     
-    if (confirm(`آیا از بن کردن اکانت ${post.handle} مطمئن هستید؟`)) {
-        if (!state.bannedUsers.includes(post.handle)) state.bannedUsers.push(post.handle);
-        state.posts = state.posts.filter(p => p.handle !== post.handle);
-        state.aiPosts = state.aiPosts.filter(p => p.handle !== post.handle);
-        state.accounts = state.accounts.filter(a => a.handle !== post.handle);
-        save(); renderFeeds();
-        alert('اکانت بن شد و آی‌دی آن دیگر قابل استفاده نیست.');
-    }
+    // حذف confirm و انجام مستقیم عملیات با نمایش اعلان
+    if (!state.bannedUsers.includes(post.handle)) state.bannedUsers.push(post.handle);
+    state.posts = state.posts.filter(p => p.handle !== post.handle);
+    state.aiPosts = state.aiPosts.filter(p => p.handle !== post.handle);
+    state.accounts = state.accounts.filter(a => a.handle !== post.handle);
+    save(); renderFeeds();
+    showToast(`اکانت ${post.handle} بن شد و آی‌دی آن دیگر قابل استفاده نیست.`, 'success');
 }
 
 function openNewChatModal() {
@@ -787,7 +859,7 @@ function openNewChatModal() {
                 <div class="new-chat-user" onclick="openChat('${handle}'); document.getElementById('new-chat-modal').classList.remove('show');">
                     <img src="${u.avatar}">
                     <div class="new-chat-user-info">
-                        <span class="new-chat-user-name">${u.name} ${u.isVerified ? `<img src="blue-tick.png" style="width:12px;height:12px;vertical-align:middle;">` : ''}</span>
+                        <span class="new-chat-user-name">${u.name}${u.isVerified ? `<img src="blue-tick.png" style="width:12px;height:12px;vertical-align:middle;margin-right:2px;">` : ''}</span>
                         <span class="new-chat-user-handle">${u.handle}</span>
                     </div>
                 </div>
@@ -821,7 +893,7 @@ document.getElementById('new-chat-search').addEventListener('input', (e) => {
                 <div class="new-chat-user" onclick="openChat('${handle}'); document.getElementById('new-chat-modal').classList.remove('show');">
                     <img src="${u.avatar}">
                     <div class="new-chat-user-info">
-                        <span class="new-chat-user-name">${u.name} ${u.isVerified ? `<img src="blue-tick.png" style="width:12px;height:12px;vertical-align:middle;">` : ''}</span>
+                        <span class="new-chat-user-name">${u.name}${u.isVerified ? `<img src="blue-tick.png" style="width:12px;height:12px;vertical-align:middle;margin-right:2px;">` : ''}</span>
                         <span class="new-chat-user-handle">${u.handle}</span>
                     </div>
                 </div>
@@ -849,7 +921,7 @@ function renderAccountList() {
             <div class="account-info">
                 <img src="${u.avatar || DEFAULT_AVATAR}" class="account-avatar">
                 <div class="account-details">
-                    <span class="account-name">${parseAll(u.name)}</span>
+                    <span class="account-name">${parseAll(u.name)}${u.isVerified ? `<img src="blue-tick.png" class="verified-icon">` : ''}</span>
                     <span class="account-handle">${u.handle}</span>
                 </div>
             </div>
@@ -1004,6 +1076,7 @@ function switchView(viewName) {
     if (viewName === 'profile') renderProfile();
     if (viewName === 'settings') renderAccountList();
     if (viewName === 'messages') renderMessages();
+    if (viewName === 'notifications') renderNotifications();
     if (currentViewStack[currentViewStack.length - 1] !== viewName) currentViewStack.push(viewName);
 }
 
@@ -1026,7 +1099,7 @@ function renderProfile() {
     const verifiedIcon = u.isVerified ? `<img src="blue-tick.png" class="verified-icon lg" alt="verified">` : '';
     
     const nameEl = document.getElementById('profile-name');
-    if(nameEl) nameEl.innerHTML = `${parseAll(u.name)} ${verifiedIcon}`;
+    if(nameEl) nameEl.innerHTML = `${parseAll(u.name)}${verifiedIcon}`;
     if(document.getElementById('profile-handle')) document.getElementById('profile-handle').textContent = u.handle;
     if(document.getElementById('profile-bio')) document.getElementById('profile-bio').innerHTML = parseAll(u.bio);
     if(document.getElementById('profile-followers')) document.getElementById('profile-followers').textContent = (u.followers || 0).toLocaleString('fa-IR');
@@ -1079,9 +1152,8 @@ function renderPostDetail(id) {
             <div class="post-avatar" onclick="openUserProfile('${post.handle}')"><img src="${post.avatar}"></div>
             <div class="post-content">
                 <div class="post-header" style="display:flex; flex-direction:column; gap:0px; margin-bottom: 4px;">
-                    <div style="display:flex; align-items:center; gap:4px; line-height: 1.1;">
-                        <span class="post-name" style="cursor:pointer;" onclick="openUserProfile('${post.handle}')">${parseAll(post.author)}</span>
-                        ${verifiedIcon}
+                    <div style="display:flex; align-items:center; gap:2px; line-height: 1.1;">
+                        <span class="post-name" style="cursor:pointer;" onclick="openUserProfile('${post.handle}')">${parseAll(post.author)}</span>${verifiedIcon}
                     </div>
                     <div style="display:flex; align-items:center; gap:6px; margin-top: -2px; line-height: 1.1;">
                         <span class="post-handle" style="cursor:pointer; color:var(--text-secondary); opacity:0.8; font-size:14px;" onclick="openUserProfile('${post.handle}')">${post.handle}</span>
@@ -1113,10 +1185,9 @@ document.getElementById('btn-compose').addEventListener('click', () => {
     }
     
     editingPostId = null;
-    composeSelectedAccount = state.user; // تنظیم اکانت پیش‌فرض به کاربر فعال
+    composeSelectedAccount = state.user;
     updateComposeUI();
     
-    // بازگرداندن دکمه انتخاب اکانت به حالت اولیه
     document.getElementById('compose-account-selector').style.pointerEvents = 'auto';
 
     document.getElementById('compose-modal-title').textContent = 'نوشتن ویراست';
@@ -1145,7 +1216,7 @@ document.getElementById('btn-toggle-poll').addEventListener('click', () => {
 
 document.getElementById('btn-add-poll-option').addEventListener('click', () => {
     const list = document.getElementById('poll-options-list');
-    if (list.children.length >= 4) { alert('حداکثر ۴ گزینه مجاز است.'); return; }
+    if (list.children.length >= 4) { showToast('حداکثر ۴ گزینه مجاز است.', 'error'); return; }
     const input = document.createElement('input');
     input.type = 'text'; input.className = 'poll-option-input'; input.placeholder = `گزینه ${list.children.length + 1}`;
     list.appendChild(input);
@@ -1210,13 +1281,12 @@ document.getElementById('btn-submit-post').addEventListener('click', () => {
         const optionInputs = document.querySelectorAll('.poll-option-input');
         const options = [];
         optionInputs.forEach(input => { const val = input.value.trim(); if (val) options.push({ text: val, votes: 0 }); });
-        if (!question || options.length < 2) { alert('سوال و حداقل ۲ گزینه وارد کنید.'); return; }
+        if (!question || options.length < 2) { showToast('سوال و حداقل ۲ گزینه وارد کنید.', 'error'); return; }
         pollData = { question, options, votedIndex: null };
     }
 
     if (!text && !tempPostImage && !pollData) return;
     
-    // استفاده از اکانت انتخاب شده برای ساخت ویراست
     const authorAccount = composeSelectedAccount || state.user;
     const newStats = generateStats(authorAccount.followers || 100);
     
@@ -1310,12 +1380,12 @@ document.getElementById('btn-create-account').addEventListener('click', () => {
     const handle = '@' + handleInput.replace(/@/g, '').replace(/\s+/g, '');
     
     if (state.bannedUsers.includes(handle)) {
-        alert('این نام کاربری به دلیل نقض قوانین بن شده و قابل استفاده نیست.');
+        showToast('این نام کاربری به دلیل نقض قوانین بن شده و قابل استفاده نیست.', 'error');
         return;
     }
     
     if (state.user.handle === handle || (state.accounts || []).some(a => a.handle === handle)) {
-        alert('این نام کاربری قبلا استفاده شده است.');
+        showToast('این نام کاربری قبلا استفاده شده است.', 'error');
         return;
     }
     
