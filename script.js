@@ -1,7 +1,7 @@
 // ========================
 // تنظیمات نسخه و بروزرسانی
 // ========================
-const APP_VERSION = '1.4.4'; 
+const APP_VERSION = '1.5.2'; 
 const CURRENT_VER_KEY = 'viraasti_app_version';
 
 function checkForUpdate() {
@@ -132,6 +132,7 @@ let isPollMode = false;
 let editingPostId = null; 
 let currentWarnPostId = null; 
 let activeChatUser = null; 
+let composeSelectedAccount = null; // اکانت انتخاب شده برای نوشتن
 
 // ========================
 // سیستم Load و Save
@@ -254,18 +255,23 @@ function createPostHTML(post) {
         <div class="post" onclick="openPostDetail(event, '${post.id}')">
             <div class="post-avatar" onclick="event.stopPropagation(); openUserProfile('${post.handle}')"><img src="${post.avatar}" alt="Avatar"></div>
             <div class="post-content">
-                <div class="post-header">
-                    <div style="display:flex; align-items:center; gap:6px; flex:1; overflow:hidden;">
-                        <span class="post-name" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer;" onclick="event.stopPropagation(); openUserProfile('${post.handle}')">${parseAll(post.author)} ${verifiedIcon}</span>
-                        <span class="post-handle" style="white-space:nowrap; cursor:pointer;" onclick="event.stopPropagation(); openUserProfile('${post.handle}')">${post.handle}</span>
-                        <span class="post-time" style="white-space:nowrap;">· ${timeStr}</span>
+                <div class="post-header" style="display:flex; flex-direction:column; margin-bottom:6px; width: 100%;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; width: 100%; line-height: 1.1;">
+                        <div style="display:flex; align-items:center; gap:4px; overflow:hidden;">
+                            <span class="post-name" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer;" onclick="event.stopPropagation(); openUserProfile('${post.handle}')">${parseAll(post.author)}</span>
+                            ${verifiedIcon}
+                        </div>
+                        <button type="button" class="post-more-btn" onclick="openPostOptions(event, '${post.id}')" style="margin-right: 0; padding: 0 4px; margin-top: -3px;"><svg style="width: 18px; height: 18px;"><use href="#i-more"/></svg></button>
                     </div>
-                    <button type="button" class="post-more-btn" onclick="openPostOptions(event, '${post.id}')"><svg><use href="#i-more"/></svg></button>
+                    <div style="display:flex; justify-content:space-between; align-items:center; width: 100%; margin-top: -1px; line-height: 1.1;">
+                        <span class="post-handle" style="white-space:nowrap; cursor:pointer; color:var(--text-secondary); opacity:0.8; font-size:13px;" onclick="event.stopPropagation(); openUserProfile('${post.handle}')">${post.handle}</span>
+                        <span class="post-time" style="white-space:nowrap; color:var(--text-secondary); opacity:0.8; font-size:13px;">${timeStr}</span>
+                    </div>
                 </div>
+                
                 <div class="post-text">${parseAll(post.text)}</div>
                 ${post.image ? `<img src="${post.image}" class="post-img" alt="Post Image">` : ''}
                 ${pollHTML}
-                ${reactionsHTML}
                 <div class="post-actions">
                     <button type="button" class="action-btn"><svg><use href="#i-reply"/></svg> ${post.stats.replies}</button>
                     <button type="button" class="action-btn retweet-btn ${post.retweeted ? 'retweeted' : ''}" onclick="toggleAction(event, '${post.id}', 'retweet')"><svg><use href="#i-retweet"/></svg> ${post.stats.retweets}</button>
@@ -273,6 +279,7 @@ function createPostHTML(post) {
                     <button type="button" class="action-btn"><svg><use href="#i-chart"/></svg> ${post.stats.views}</button>
                     <button type="button" class="action-btn bookmark-btn ${post.bookmarked ? 'bookmarked' : ''}" onclick="toggleAction(event, '${post.id}', 'bookmark')"><svg><use href="#i-bookmark"/></svg></button>
                 </div>
+                ${reactionsHTML}
             </div>
         </div>
     `;
@@ -423,6 +430,9 @@ function openUserProfile(rawHandle) {
 function renderMessages() {
     const container = document.getElementById('messages-list');
     if (!container) return;
+
+    const msgHeaderAvatar = document.getElementById('messages-header-avatar');
+    if (msgHeaderAvatar) msgHeaderAvatar.src = state.user.avatar || DEFAULT_AVATAR;
     
     const myMessages = state.directMessages.filter(m => m.recipient === state.user.handle);
     const unreadCount = myMessages.filter(m => !m.read).length;
@@ -464,9 +474,6 @@ function renderMessages() {
     }).join('');
 }
 
-// ========================
-// صفحه چت اختصاصی (اصلاح شده: راست‌چین و کلیک‌پذیر)
-// ========================
 function openChat(senderHandle) {
     activeChatUser = senderHandle;
     const myMessages = state.directMessages.filter(m => (m.recipient === state.user.handle && m.sender === senderHandle) || (m.sender === state.user.handle && m.recipient === senderHandle));
@@ -493,7 +500,6 @@ function openChat(senderHandle) {
         }).join('');
     }
 
-    // تنظیمات هدر چت (راست‌چین کردن و اضافه کردن تیک آبی و آیدی)
     document.getElementById('chat-header-name').textContent = uInfo.name;
     document.getElementById('chat-header-handle').textContent = uInfo.handle;
     
@@ -559,7 +565,52 @@ document.getElementById('chat-upload-image').addEventListener('change', (e) => {
 });
 
 // ========================
-// منوی سه نقطه (Bottom Sheet)
+// توابع انتخاب اکانت برای نوشتن
+// ========================
+function updateComposeUI() {
+    if (!composeSelectedAccount) return;
+    document.getElementById('compose-avatar').src = composeSelectedAccount.avatar || DEFAULT_AVATAR;
+    
+    // اضافه کردن تیک آبی با سایز خود صفحه ویراست (20px)
+    const tickHTML = composeSelectedAccount.isVerified ? `<img src="blue-tick.png" class="verified-icon" style="width: 20px; height: 20px; margin-right: 4px; vertical-align: middle;">` : '';
+    document.getElementById('compose-account-name').innerHTML = `${parseAll(composeSelectedAccount.name)} ${tickHTML}`;
+    document.getElementById('compose-account-handle').textContent = composeSelectedAccount.handle;
+}
+
+function openComposeAccountSelector() {
+    if (editingPostId) return; // در حالت ویرایش اجازه تغییر اکانت را نمی‌دهیم
+
+    const container = document.getElementById('compose-account-list');
+    const allUsers = [state.user, ...(state.accounts || []).filter(a => a.handle !== state.user.handle)];
+    
+    container.innerHTML = allUsers.map(u => `
+        <div class="account-card ${u.handle === composeSelectedAccount.handle ? 'active' : ''}" onclick="selectComposeAccount('${u.handle}')">
+            <div class="account-info">
+                <img src="${u.avatar || DEFAULT_AVATAR}" class="account-avatar">
+                <div class="account-details">
+                    <span class="account-name">${parseAll(u.name)} ${u.isVerified ? `<img src="blue-tick.png" class="verified-icon">` : ''}</span>
+                    <span class="account-handle">${u.handle}</span>
+                </div>
+            </div>
+            ${u.handle === composeSelectedAccount.handle ? '<span class="btn-active-label">انتخاب شده</span>' : ''}
+        </div>
+    `).join('');
+    
+    document.getElementById('compose-account-modal').classList.add('show');
+}
+
+function selectComposeAccount(handle) {
+    if (handle === state.user.handle) {
+        composeSelectedAccount = state.user;
+    } else {
+        composeSelectedAccount = (state.accounts || []).find(a => a.handle === handle);
+    }
+    updateComposeUI();
+    document.getElementById('compose-account-modal').classList.remove('show');
+}
+
+// ========================
+// منوی سه نقطه
 // ========================
 function openPostOptions(e, id) {
     e.stopPropagation();
@@ -632,11 +683,15 @@ function editPost(id) {
     if (!post) return;
     
     editingPostId = id;
+    composeSelectedAccount = state.user; // در حالت ویرایش فقط خود کاربر
+    updateComposeUI();
+    
+    document.getElementById('compose-account-selector').style.pointerEvents = 'none'; // غیرفعال کردن کلیک
+
     document.getElementById('compose-modal-title').textContent = 'ویرایش ویراست';
     document.getElementById('compose-text').value = post.text;
     document.getElementById('compose-poll-container').style.display = 'none';
     document.getElementById('compose-image-preview').style.display = 'none';
-    document.getElementById('compose-avatar').src = state.user.avatar;
     document.getElementById('compose-modal').classList.add('show');
 }
 
@@ -963,7 +1018,7 @@ function goBack() {
 function renderProfile() {
     const u = state.user;
     const headerEl = document.getElementById('profile-header');
-    if(headerEl) headerEl.style.backgroundImage = `url('${u.header || DEFAULT_HEADER}')`;
+    if (headerEl) headerEl.style.backgroundImage = `url('${u.header || DEFAULT_HEADER}')`;
     
     const avEl = document.getElementById('profile-avatar');
     if(avEl) avEl.innerHTML = `<img src="${u.avatar || DEFAULT_AVATAR}" alt="Avatar">`;
@@ -1008,18 +1063,35 @@ function renderPostDetail(id) {
         pollHTML += `<div class="poll-footer">${totalVotes.toLocaleString('fa-IR')} رأی ${hasVoted ? '· شما رأی داده‌اید' : ''}</div></div>`;
     }
 
+    let reactionsHTML = '<div class="post-reactions" style="margin-top: 12px;">';
+    if (post.stats.reactions && Object.keys(post.stats.reactions).length > 0) {
+        for (const [emoji, count] of Object.entries(post.stats.reactions)) {
+            if (count > 0) {
+                const isReacted = post.myReaction === emoji ? 'reacted' : '';
+                reactionsHTML += `<button type="button" class="reaction-pill ${isReacted}" onclick="toggleReaction(event, '${post.id}', '${emoji}')">${getEmojiImg(emoji)}<span class="rp-count">${count.toLocaleString('fa-IR')}</span></button>`;
+            }
+        }
+    }
+    reactionsHTML += `<button type="button" class="add-reaction-btn" onclick="openReactionPicker(event, '${post.id}')">${iconReaction}</button></div>`;
+
     const detailHTML = `
         <div class="post" style="border-bottom:none;">
             <div class="post-avatar" onclick="openUserProfile('${post.handle}')"><img src="${post.avatar}"></div>
             <div class="post-content">
-                <div class="post-header">
-                    <span class="post-name" style="cursor:pointer;" onclick="openUserProfile('${post.handle}')">${parseAll(post.author)} ${verifiedIcon}</span>
-                    <span class="post-handle" style="cursor:pointer;" onclick="openUserProfile('${post.handle}')">${post.handle}</span>
+                <div class="post-header" style="display:flex; flex-direction:column; gap:0px; margin-bottom: 4px;">
+                    <div style="display:flex; align-items:center; gap:4px; line-height: 1.1;">
+                        <span class="post-name" style="cursor:pointer;" onclick="openUserProfile('${post.handle}')">${parseAll(post.author)}</span>
+                        ${verifiedIcon}
+                    </div>
+                    <div style="display:flex; align-items:center; gap:6px; margin-top: -2px; line-height: 1.1;">
+                        <span class="post-handle" style="cursor:pointer; color:var(--text-secondary); opacity:0.8; font-size:14px;" onclick="openUserProfile('${post.handle}')">${post.handle}</span>
+                    </div>
                 </div>
                 <div class="post-text" style="font-size:18px; margin-top:8px;">${parseAll(post.text)}</div>
                 ${post.image ? `<img src="${post.image}" class="post-img" style="margin-top:12px;">` : ''}
                 ${pollHTML}
                 <div style="color:var(--text-secondary); font-size:14px; margin-top:16px;">${timeStr} · ${post.stats.views} بازدید</div>
+                ${reactionsHTML}
             </div>
         </div>
     `;
@@ -1041,10 +1113,15 @@ document.getElementById('btn-compose').addEventListener('click', () => {
     }
     
     editingPostId = null;
+    composeSelectedAccount = state.user; // تنظیم اکانت پیش‌فرض به کاربر فعال
+    updateComposeUI();
+    
+    // بازگرداندن دکمه انتخاب اکانت به حالت اولیه
+    document.getElementById('compose-account-selector').style.pointerEvents = 'auto';
+
     document.getElementById('compose-modal-title').textContent = 'نوشتن ویراست';
     document.getElementById('compose-text').value = '';
     document.getElementById('compose-image-preview').style.display = 'none';
-    document.getElementById('compose-avatar').src = state.user.avatar || DEFAULT_AVATAR;
     
     document.getElementById('compose-poll-container').style.display = 'none';
     document.getElementById('poll-question').value = '';
@@ -1074,7 +1151,7 @@ document.getElementById('btn-add-poll-option').addEventListener('click', () => {
     list.appendChild(input);
 });
 
-function compressImage(file, maxWidth, maxHeight, callback, cropRatio = null) {
+function compressImage(file, maxWidth, maxHeight, callback, cropRatio = null, quality = 0.85) {
     const reader = new FileReader();
     reader.onload = (e) => {
         const img = new Image();
@@ -1094,7 +1171,7 @@ function compressImage(file, maxWidth, maxHeight, callback, cropRatio = null) {
             }
             canvas.width = targetWidth; canvas.height = targetHeight;
             ctx.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, targetWidth, targetHeight);
-            callback(canvas.toDataURL('image/jpeg', 0.85));
+            callback(canvas.toDataURL('image/jpeg', quality));
         };
         img.src = e.target.result;
     };
@@ -1112,7 +1189,7 @@ document.addEventListener('change', (e) => {
     }
     if (e.target && e.target.id === 'upload-cover') {
         const file = e.target.files[0];
-        if (file) compressImage(file, 1500, 500, (base64) => { tempCover = base64; document.getElementById('edit-cover-preview').style.backgroundImage = `url('${base64}')`; }, 3.0); 
+        if (file) compressImage(file, 1920, 1080, (base64) => { tempCover = base64; document.getElementById('edit-cover-preview').style.backgroundImage = `url('${base64}')`; }, null, 0.92); 
     }
 });
 
@@ -1138,12 +1215,26 @@ document.getElementById('btn-submit-post').addEventListener('click', () => {
     }
 
     if (!text && !tempPostImage && !pollData) return;
-    const newStats = generateStats(state.user.followers);
+    
+    // استفاده از اکانت انتخاب شده برای ساخت ویراست
+    const authorAccount = composeSelectedAccount || state.user;
+    const newStats = generateStats(authorAccount.followers || 100);
+    
     const newPost = {
-        id: Date.now().toString(), author: state.user.name, handle: state.user.handle,
-        avatar: state.user.avatar || DEFAULT_AVATAR, isVerified: state.user.isVerified,
-        ts: Date.now(), text, image: tempPostImage, poll: pollData, stats: newStats,
-        myReaction: null, liked: false, retweeted: false, bookmarked: false
+        id: Date.now().toString(), 
+        author: authorAccount.name, 
+        handle: authorAccount.handle,
+        avatar: authorAccount.avatar || DEFAULT_AVATAR, 
+        isVerified: authorAccount.isVerified,
+        ts: Date.now(), 
+        text, 
+        image: tempPostImage, 
+        poll: pollData, 
+        stats: newStats,
+        myReaction: null, 
+        liked: false, 
+        retweeted: false, 
+        bookmarked: false
     };
     
     state.posts.unshift(newPost);
