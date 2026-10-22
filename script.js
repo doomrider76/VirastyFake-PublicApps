@@ -65,7 +65,10 @@ const DEFAULT_HEADER = 'https://images.unsplash.com/photo-1579546929518-9e396f3c
 // ========================
 let emojiData = null;
 const emojiMap = {
-    '❤️': 'red-heart', '👍': 'thumbs-up', '😂': 'face-with-tears-of-joy', '🔥': 'fire', '😮': 'face-with-open-mouth'
+    '❤️': 'red-heart', '👍': 'thumbs-up', '😂': 'face-with-tears-of-joy', '🔥': 'fire', '😮': 'face-with-open-mouth',
+    '😭': 'loudly-crying-face', '😍': 'smiling-face-with-heart-eyes', '🙏': 'folded-hands', '😊': 'smiling-face-with-smiling-eyes', '🥺': 'pleading-face',
+    '😎': 'smiling-face-with-sunglasses', '💔': 'broken-heart', '✨': 'sparkles', '💯': 'hundred-points', '🤔': 'thinking-face',
+    '👏': 'clapping-hands', '🎉': 'party-popper', '💀': 'skull', '🤣': 'rolling-on-the-floor-laughing', '😁': 'beaming-face-with-smiling-eyes'
 };
 
 async function initEmojiData() {
@@ -118,7 +121,7 @@ function parseEmojis(text) {
 function getEmojiImg(emoji, size = '18px') {
     const name = emojiMap[emoji];
     if (!name) return `<span>${emoji}</span>`; 
-    return `<img src="https://api.iconify.design/fluent-emoji/${name}.svg" style="width: ${size}; height: ${size}; object-fit: contain; vertical-align: middle;" alt="${emoji}">`;
+    return `<img src="https://api.iconify.design/fluent-emoji/${name}.svg" style="width: ${size}; height: ${size}; object-fit: contain; vertical-align: middle; transform: translateZ(0);" alt="${emoji}">`;
 }
 
 function parseAll(text) {
@@ -126,6 +129,22 @@ function parseAll(text) {
     let parsed = parseEmojis(text);
     parsed = parsed.replace(/(^|\s)(@[a-zA-Z0-9_آ-ی]+)/g, '$1<span class="mention" onclick="event.stopPropagation(); openUserProfile(\'$2\')">$2</span>');
     return parsed;
+}
+
+// ========================
+// آپدیت لایو باکس تایپ برای ایموجی‌ها
+// ========================
+function updateComposeHighlight() {
+    const text = document.getElementById('compose-text').value;
+    const highlight = document.getElementById('compose-highlight');
+    if (text === '') {
+        highlight.innerHTML = '';
+    } else {
+        // یک فاصله نامرئی در انتها برای جلوگیری از به هم ریختن خطوط خالی
+        highlight.innerHTML = parseAll(text) + '<br>'; 
+    }
+    // همگام‌سازی اسکرول در صورت طولانی شدن متن
+    highlight.scrollTop = document.getElementById('compose-text').scrollTop;
 }
 
 let state = {
@@ -233,7 +252,6 @@ const aiBadTexts = [
 
 function startAIModerationSimulation() {
     setInterval(() => {
-        // انتخاب کاربر تصادفی که بن نشده باشد
         const availableUsers = aiBadUsers.filter(u => !state.bannedUsers.includes(u.handle));
         if (availableUsers.length === 0) return;
         
@@ -256,7 +274,7 @@ function startAIModerationSimulation() {
         state.aiPosts.unshift(newPost);
         save();
         renderFeeds();
-    }, 45000); // هر ۴۵ ثانیه یک ویراست مشکل‌دار جدید
+    }, 45000); 
 }
 
 if (state.aiPosts.length === 0) {
@@ -340,13 +358,13 @@ function createPostHTML(post) {
             <div class="post-avatar" onclick="event.stopPropagation(); openUserProfile('${post.handle}')"><img src="${post.avatar}" alt="Avatar"></div>
             <div class="post-content">
                 <div class="post-header" style="display:flex; flex-direction:column; margin-bottom:4px; width: 100%;">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start; width: 100%; line-height: 1.3;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; width: 100%;">
                         <div style="display:flex; align-items:center; gap:2px; overflow:visible; min-width:0;">
-                            <span class="post-name" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer; line-height: 1.3; padding-bottom: 2px;" onclick="event.stopPropagation(); openUserProfile('${post.handle}')">${parseAll(post.author)}</span>${verifiedIcon}
+                            <span class="post-name" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer;" onclick="event.stopPropagation(); openUserProfile('${post.handle}')">${parseAll(post.author)}</span>${verifiedIcon}
                         </div>
-                        <button type="button" class="post-more-btn" onclick="openPostOptions(event, '${post.id}')" style="margin-right: 0; padding: 0 4px; margin-top: -2px;"><svg style="width: 18px; height: 18px;"><use href="#i-more"/></svg></button>
+                        <button type="button" class="post-more-btn" onclick="openPostOptions(event, '${post.id}')" style="margin-right: 0; padding: 0 4px; margin-top: 2px;"><svg style="width: 18px; height: 18px;"><use href="#i-more"/></svg></button>
                     </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; width: 100%; margin-top: -4px; line-height: 1.3;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; width: 100%; margin-top: 0px;">
                         <span class="post-handle" style="white-space:nowrap; cursor:pointer; color:var(--text-secondary); opacity:0.8; font-size:13px;" onclick="event.stopPropagation(); openUserProfile('${post.handle}')">${post.handle}</span>
                         <span class="post-time" style="white-space:nowrap; color:var(--text-secondary); opacity:0.8; font-size:13px;">${timeStr}</span>
                     </div>
@@ -822,6 +840,7 @@ function editPost(id) {
 
     document.getElementById('compose-modal-title').textContent = 'ویرایش ویراست';
     document.getElementById('compose-text').value = post.text;
+    updateComposeHighlight(); // آپدیت لایه نمایش ایموجی‌ها در ویرایش
     document.getElementById('compose-poll-container').style.display = 'none';
     document.getElementById('compose-image-preview').style.display = 'none';
     document.getElementById('compose-modal').classList.add('show');
@@ -1208,10 +1227,10 @@ function renderPostDetail(id) {
             <div class="post-avatar" onclick="openUserProfile('${post.handle}')"><img src="${post.avatar}"></div>
             <div class="post-content">
                 <div class="post-header" style="display:flex; flex-direction:column; gap:0px; margin-bottom: 4px;">
-                    <div style="display:flex; align-items:center; gap:2px; line-height: 1.3;">
-                        <span class="post-name" style="cursor:pointer; line-height: 1.3; padding-bottom: 2px;" onclick="openUserProfile('${post.handle}')">${parseAll(post.author)}</span>${verifiedIcon}
+                    <div style="display:flex; align-items:center; gap:2px;">
+                        <span class="post-name" style="cursor:pointer;" onclick="openUserProfile('${post.handle}')">${parseAll(post.author)}</span>${verifiedIcon}
                     </div>
-                    <div style="display:flex; align-items:center; gap:6px; margin-top: -4px; line-height: 1.3;">
+                    <div style="display:flex; align-items:center; gap:6px; margin-top: 0px;">
                         <span class="post-handle" style="cursor:pointer; color:var(--text-secondary); opacity:0.8; font-size:14px;" onclick="openUserProfile('${post.handle}')">${post.handle}</span>
                     </div>
                 </div>
@@ -1248,6 +1267,7 @@ document.getElementById('btn-compose').addEventListener('click', () => {
 
     document.getElementById('compose-modal-title').textContent = 'نوشتن ویراست';
     document.getElementById('compose-text').value = '';
+    updateComposeHighlight(); // پاک کردن پیش‌نمایش قبلی
     document.getElementById('compose-image-preview').style.display = 'none';
     
     document.getElementById('compose-poll-container').style.display = 'none';
@@ -1485,4 +1505,10 @@ function generateStats(followers) {
 
 document.addEventListener('DOMContentLoaded', () => {
     initEmojiData(); renderFeeds(); renderProfile(); switchHomeTab('following'); checkForUpdate(); startAIModerationSimulation();
+    
+    // اتصال رویدادها برای آپدیت لایو ایموجی‌ها در باکس تایپ
+    document.getElementById('compose-text').addEventListener('input', updateComposeHighlight);
+    document.getElementById('compose-text').addEventListener('scroll', function() {
+        document.getElementById('compose-highlight').scrollTop = this.scrollTop;
+    });
 });
