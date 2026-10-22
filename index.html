@@ -85,25 +85,28 @@
 
     <!-- صفحه چت اختصاصی -->
     <main id="view-chat" class="view">
-        <header class="floating-sub-header">
-            <div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="openUserProfile(activeChatUser)">
-                <button type="button" class="icon-btn" onclick="event.stopPropagation(); switchView('messages')"><svg><use href="#i-back"/></svg></button>
-                <img src="Logo.png" id="chat-header-avatar" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border: 2px solid var(--border-color);">
-                <div style="display:flex; flex-direction:column;">
-                    <div style="display:flex; align-items:center; gap:4px;">
-                        <span class="view-title-sm" id="chat-header-name" style="font-size:16px;">پشتیبانی ویراستی</span>
-                        <img src="blue-tick.png" id="chat-header-tick" class="verified-icon" style="display:none; margin-right:2px;">
+        <header class="floating-sub-header" style="justify-content: flex-start; gap: 12px;">
+            <button type="button" class="icon-btn" onclick="switchView('messages')" style="flex-shrink: 0;"><svg><use href="#i-back"/></svg></button>
+            <div style="display:flex; align-items:center; gap:10px; cursor:pointer; overflow: hidden;" onclick="openUserProfile(activeChatUser)">
+                <img src="Logo.png" id="chat-header-avatar" style="width:42px; height:42px; border-radius:50%; object-fit:cover; border: 2px solid var(--border-color); flex-shrink: 0; background: white;">
+                <div style="display:flex; flex-direction:column; justify-content: center; min-width: 0;">
+                    <div style="display:flex; align-items:center; gap:4px; white-space: nowrap;">
+                        <span class="view-title-sm" id="chat-header-name" style="font-size:16px; overflow: hidden; text-overflow: ellipsis; font-weight: 800;">پشتیبانی ویراستی</span>
+                        <img src="blue-tick.png" id="chat-header-tick" class="verified-icon" style="display:none; margin-right:4px; flex-shrink: 0;">
                     </div>
-                    <span id="chat-header-handle" style="font-size:13px; color:var(--text-secondary);">@support</span>
+                    <span id="chat-header-handle" dir="ltr" style="font-size:13px; color:var(--text-secondary); text-align: right; width: fit-content; margin-top: 2px;">@support</span>
                 </div>
             </div>
         </header>
+        
+        <!-- این باکس برای وسط چین کردن متن خالی است -->
         <div id="chat-messages" class="chat-container"></div>
+        
         <div class="chat-input-area">
-            <input type="text" placeholder="پیام خود را بنویسید..." id="chat-input">
-            <label for="chat-upload-image" class="icon-btn"><svg><use href="#i-image"/></svg></label>
+            <label for="chat-upload-image" class="icon-btn" style="flex-shrink: 0;"><svg><use href="#i-image"/></svg></label>
             <input type="file" id="chat-upload-image" accept="image/*" hidden>
-            <button type="button" class="icon-btn" id="btn-send-chat"><svg><use href="#i-send"/></svg></button>
+            <input type="text" placeholder="پیام خود را بنویسید..." id="chat-input">
+            <button type="button" class="icon-btn" id="btn-send-chat" style="flex-shrink: 0;"><svg><use href="#i-send"/></svg></button>
         </div>
     </main>
 
@@ -338,9 +341,8 @@
             <h2>Virasty بروز شد!</h2>
             <p>نسخه جدید با امکانات و تغییرات زیر در دسترس شماست:</p>
             <ul class="changelog">
-                <li><img src="https://api.iconify.design/fluent-emoji/sparkles.svg" class="emoji-img" alt="✨"> بازگشت هدر دایرکت و چت به حالت شیشه‌ای شناور</li>
-                <li><img src="https://api.iconify.design/fluent-emoji/wrench.svg" class="emoji-img" alt="🔧"> راست‌چین شدن اطلاعات کاربر در صفحه چت</li>
-                <li><img src="https://api.iconify.design/fluent-emoji/rocket.svg" class="emoji-img" alt="🚀"> قابلیت کلیک روی پروفایل از داخل صفحه چت</li>
+                <li><img src="https://api.iconify.design/fluent-emoji/sparkles.svg" class="emoji-img" alt="✨"> مرتب‌سازی کامل هدر و باکس تایپ صفحه چت</li>
+                <li><img src="https://api.iconify.design/fluent-emoji/wrench.svg" class="emoji-img" alt="🔧"> رفع مشکل نمایش آیدی (RTL) در چت</li>
             </ul>
             <div class="update-actions">
                 <button class="btn-primary" id="btn-do-update">بروزرسانی کن</button>
