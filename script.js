@@ -40,17 +40,11 @@ document.getElementById('btn-dismiss-update').addEventListener('click', () => {
 function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
     if (!container) return;
-
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     toast.textContent = message;
-    
     container.appendChild(toast);
-    
-    // انیمیشن ورود
     setTimeout(() => toast.classList.add('show'), 10);
-    
-    // حذف خودکار بعد از ۳ ثانیه
     setTimeout(() => {
         toast.classList.remove('show');
         setTimeout(() => toast.remove(), 300);
@@ -143,7 +137,8 @@ let state = {
     posts: [],
     aiPosts: [],
     directMessages: [], 
-    bannedUsers: [] 
+    bannedUsers: [],
+    warnSenderAccount: null 
 };
 
 let currentViewStack = ['home'];
@@ -171,6 +166,9 @@ function load() {
         if (Array.isArray(saved.aiPosts)) state.aiPosts = saved.aiPosts;
         if (Array.isArray(saved.directMessages)) state.directMessages = saved.directMessages;
         if (Array.isArray(saved.bannedUsers)) state.bannedUsers = saved.bannedUsers;
+        if (saved.warnSenderAccount) state.warnSenderAccount = saved.warnSenderAccount;
+        else state.warnSenderAccount = state.user.handle;
+        
         if (!state.user.followedUsers) state.user.followedUsers = [];
     } catch (e) { console.error(e); }
 }
@@ -187,7 +185,8 @@ function save() {
 
             const payload = {
                 user: state.user, accounts: allAccounts, posts: state.posts, aiPosts: state.aiPosts,
-                directMessages: state.directMessages, bannedUsers: state.bannedUsers
+                directMessages: state.directMessages, bannedUsers: state.bannedUsers,
+                warnSenderAccount: state.warnSenderAccount
             };
             const s = JSON.stringify(payload);
             localStorage.setItem(KEY, s);
@@ -197,6 +196,68 @@ function save() {
 }
 
 load();
+if (!state.warnSenderAccount) state.warnSenderAccount = state.user.handle;
+
+// ========================
+// توابع کمکی
+// ========================
+function getAccountInfo(handle) {
+    if (!handle) return state.user;
+    if (handle === state.user.handle) return state.user;
+    const acc = (state.accounts || []).find(a => a.handle === handle);
+    if (acc) return acc;
+    const post = [...state.posts, ...state.aiPosts].find(p => p.handle === handle);
+    if (post) {
+        return { name: post.author, handle: post.handle, avatar: post.avatar, isVerified: post.isVerified };
+    }
+    return state.user;
+}
+
+// ========================
+// شبیه‌ساز هوش مصنوعی مدیریت محتوا
+// ========================
+const aiBadUsers = [
+    { author: 'کاربر ناشناس', handle: '@anon_772', avatar: 'https://ui-avatars.com/api/?name=User&background=444&color=fff' },
+    { author: 'اخبار فیک', handle: '@fake_news_ir', avatar: 'https://ui-avatars.com/api/?name=News&background=dc2626&color=fff' },
+    { author: 'هکر کلاه سیاه', handle: '@black_hat', avatar: 'https://ui-avatars.com/api/?name=Hacker&background=000&color=fff' },
+    { author: 'ترولر', handle: '@troller_402', avatar: 'https://ui-avatars.com/api/?name=Troll&background=3b82f6&color=fff' },
+    { author: 'کاربر حذف شده', handle: '@deleted_user', avatar: 'https://ui-avatars.com/api/?name=Del&background=555&color=fff' }
+];
+
+const aiBadTexts = [
+    'این یک متن توهین آمیز و نامناسب است که برای تست سیستم بن و گزارش قرار داده شده است. لطفاً این کاربر را بن کنید.',
+    'محتوای خلاف قوانین! این پست باید گزارش شود.',
+    'من یک ربات اسپم هستم و می‌خواهم شما را اذیت کنم.',
+    'این یک ویراست تستی برای بررسی عملکرد سیستم مدیریت محتوا می‌باشد.'
+];
+
+function startAIModerationSimulation() {
+    setInterval(() => {
+        // انتخاب کاربر تصادفی که بن نشده باشد
+        const availableUsers = aiBadUsers.filter(u => !state.bannedUsers.includes(u.handle));
+        if (availableUsers.length === 0) return;
+        
+        const randomUser = availableUsers[Math.floor(Math.random() * availableUsers.length)];
+        const randomText = aiBadTexts[Math.floor(Math.random() * aiBadTexts.length)];
+        
+        const newPost = {
+            id: 'ai_bad_' + Date.now(),
+            author: randomUser.author,
+            handle: randomUser.handle,
+            avatar: randomUser.avatar,
+            isVerified: false,
+            ts: Date.now(),
+            text: randomText,
+            image: null,
+            stats: generateStats(Math.floor(Math.random() * 500)),
+            myReaction: null, liked: false, retweeted: false, bookmarked: false
+        };
+        
+        state.aiPosts.unshift(newPost);
+        save();
+        renderFeeds();
+    }, 45000); // هر ۴۵ ثانیه یک ویراست مشکل‌دار جدید
+}
 
 if (state.aiPosts.length === 0) {
     const now = Date.now();
@@ -278,14 +339,14 @@ function createPostHTML(post) {
         <div class="post" onclick="openPostDetail(event, '${post.id}')">
             <div class="post-avatar" onclick="event.stopPropagation(); openUserProfile('${post.handle}')"><img src="${post.avatar}" alt="Avatar"></div>
             <div class="post-content">
-                <div class="post-header" style="display:flex; flex-direction:column; margin-bottom:6px; width: 100%;">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start; width: 100%; line-height: 1.1;">
-                        <div style="display:flex; align-items:center; gap:2px; overflow:hidden;">
-                            <span class="post-name" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer;" onclick="event.stopPropagation(); openUserProfile('${post.handle}')">${parseAll(post.author)}</span>${verifiedIcon}
+                <div class="post-header" style="display:flex; flex-direction:column; margin-bottom:4px; width: 100%;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; width: 100%; line-height: 1.3;">
+                        <div style="display:flex; align-items:center; gap:2px; overflow:visible; min-width:0;">
+                            <span class="post-name" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer; line-height: 1.3; padding-bottom: 2px;" onclick="event.stopPropagation(); openUserProfile('${post.handle}')">${parseAll(post.author)}</span>${verifiedIcon}
                         </div>
-                        <button type="button" class="post-more-btn" onclick="openPostOptions(event, '${post.id}')" style="margin-right: 0; padding: 0 4px; margin-top: -3px;"><svg style="width: 18px; height: 18px;"><use href="#i-more"/></svg></button>
+                        <button type="button" class="post-more-btn" onclick="openPostOptions(event, '${post.id}')" style="margin-right: 0; padding: 0 4px; margin-top: -2px;"><svg style="width: 18px; height: 18px;"><use href="#i-more"/></svg></button>
                     </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; width: 100%; margin-top: -1px; line-height: 1.1;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; width: 100%; margin-top: -4px; line-height: 1.3;">
                         <span class="post-handle" style="white-space:nowrap; cursor:pointer; color:var(--text-secondary); opacity:0.8; font-size:13px;" onclick="event.stopPropagation(); openUserProfile('${post.handle}')">${post.handle}</span>
                         <span class="post-time" style="white-space:nowrap; color:var(--text-secondary); opacity:0.8; font-size:13px;">${timeStr}</span>
                     </div>
@@ -692,13 +753,14 @@ function openPostOptions(e, id) {
 
     const isMine = post.handle === state.user.handle;
     const menu = document.getElementById('post-options-menu');
+    const isWarnSender = state.warnSenderAccount === post.handle;
     
     let menuHTML = '';
     if (isMine) {
         menuHTML += `<div class="post-option-item" onclick="editPost('${post.id}')"><svg><use href="#i-pen"/></svg> ویرایش ویراست</div>`;
         menuHTML += `<div class="post-option-item danger" onclick="deletePost('${post.id}')"><svg><use href="#i-trash"/></svg> حذف ویراست</div>`;
         
-        if (!post.isWarnSender) {
+        if (!isWarnSender) {
             menuHTML += `<div class="post-option-item" onclick="setWarnSender('${post.id}')"><svg><use href="#i-user"/></svg> تنظیم به عنوان اخطار دهنده</div>`;
         } else {
             menuHTML += `<div class="post-option-item" onclick="removeWarnSender('${post.id}')"><svg><use href="#i-close"/></svg> لغو اخطار دهنده</div>`;
@@ -707,7 +769,7 @@ function openPostOptions(e, id) {
         if (!post.isVerified) menuHTML += `<div class="post-option-item" onclick="giveBlueTick('${post.id}')"><svg><use href="#i-check"/></svg> دادن تیک آبی</div>`;
         menuHTML += `<div class="post-option-item danger" onclick="deletePost('${post.id}')"><svg><use href="#i-trash"/></svg> حذف ویراست</div>`;
         menuHTML += `<div class="post-option-item" onclick="openWarnModal('${post.id}')"><svg><use href="#i-alert"/></svg> اخطار به ارسال کننده</div>`;
-        if (!post.isWarnSender) {
+        if (!isWarnSender) {
             menuHTML += `<div class="post-option-item" onclick="setWarnSender('${post.id}')"><svg><use href="#i-user"/></svg> تنظیم به عنوان اخطار دهنده</div>`;
         } else {
             menuHTML += `<div class="post-option-item" onclick="removeWarnSender('${post.id}')"><svg><use href="#i-close"/></svg> لغو اخطار دهنده</div>`;
@@ -734,20 +796,17 @@ function setWarnSender(id) {
     closePostOptions();
     const post = state.posts.find(p => p.id === id) || state.aiPosts.find(p => p.id === id);
     if (post) {
-        post.isWarnSender = true;
+        state.warnSenderAccount = post.handle;
         save();
-        showToast('از این پس پیام‌های اخطار از طرف این پروفایل ارسال می‌شود.', 'info');
+        showToast(`از این پس پیام‌های اخطار از طرف ${post.author} (${post.handle}) ارسال می‌شود.`, 'info');
     }
 }
 
 function removeWarnSender(id) {
     closePostOptions();
-    const post = state.posts.find(p => p.id === id) || state.aiPosts.find(p => p.id === id);
-    if (post) {
-        post.isWarnSender = false;
-        save();
-        showToast('اخطار دهنده به حالت پیش‌فرض (شما) بازگشت.', 'info');
-    }
+    state.warnSenderAccount = state.user.handle;
+    save();
+    showToast('اخطار دهنده به حساب فعال شما بازگشت.', 'info');
 }
 
 function editPost(id) {
@@ -802,9 +861,7 @@ document.getElementById('btn-submit-warn').addEventListener('click', () => {
     if (post) {
         const preview = post.text.length > 30 ? post.text.substring(0, 30) + '...' : post.text;
         
-        const senderInfo = post.isWarnSender ? 
-            { handle: post.handle, name: post.author, avatar: post.avatar, isVerified: post.isVerified } : 
-            { handle: state.user.handle, name: state.user.name, avatar: state.user.avatar, isVerified: state.user.isVerified };
+        const senderInfo = getAccountInfo(state.warnSenderAccount);
 
         const msgText = `کاربر محترم ${post.author}\n\nویراست شما:\n"${preview}"\n\nبه دلیل "${reason}" اخطار دریافت کرد. در رعایت قوانین کوشا باشید.`;
 
@@ -822,7 +879,7 @@ document.getElementById('btn-submit-warn').addEventListener('click', () => {
         state.directMessages.unshift(newDM);
         save();
         renderMessages();
-        showToast('اخطار با موفقیت ارسال شد.', 'success');
+        showToast(`اخطار با موفقیت از طرف ${senderInfo.name} ارسال شد.`, 'success');
     }
     
     document.getElementById('warn-modal').classList.remove('show');
@@ -833,7 +890,6 @@ function banUser(id) {
     const post = [...state.posts, ...state.aiPosts].find(p => p.id == id);
     if (!post) return;
     
-    // حذف confirm و انجام مستقیم عملیات با نمایش اعلان
     if (!state.bannedUsers.includes(post.handle)) state.bannedUsers.push(post.handle);
     state.posts = state.posts.filter(p => p.handle !== post.handle);
     state.aiPosts = state.aiPosts.filter(p => p.handle !== post.handle);
@@ -1152,10 +1208,10 @@ function renderPostDetail(id) {
             <div class="post-avatar" onclick="openUserProfile('${post.handle}')"><img src="${post.avatar}"></div>
             <div class="post-content">
                 <div class="post-header" style="display:flex; flex-direction:column; gap:0px; margin-bottom: 4px;">
-                    <div style="display:flex; align-items:center; gap:2px; line-height: 1.1;">
-                        <span class="post-name" style="cursor:pointer;" onclick="openUserProfile('${post.handle}')">${parseAll(post.author)}</span>${verifiedIcon}
+                    <div style="display:flex; align-items:center; gap:2px; line-height: 1.3;">
+                        <span class="post-name" style="cursor:pointer; line-height: 1.3; padding-bottom: 2px;" onclick="openUserProfile('${post.handle}')">${parseAll(post.author)}</span>${verifiedIcon}
                     </div>
-                    <div style="display:flex; align-items:center; gap:6px; margin-top: -2px; line-height: 1.1;">
+                    <div style="display:flex; align-items:center; gap:6px; margin-top: -4px; line-height: 1.3;">
                         <span class="post-handle" style="cursor:pointer; color:var(--text-secondary); opacity:0.8; font-size:14px;" onclick="openUserProfile('${post.handle}')">${post.handle}</span>
                     </div>
                 </div>
@@ -1428,5 +1484,5 @@ function generateStats(followers) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    initEmojiData(); renderFeeds(); renderProfile(); switchHomeTab('following'); checkForUpdate();
+    initEmojiData(); renderFeeds(); renderProfile(); switchHomeTab('following'); checkForUpdate(); startAIModerationSimulation();
 });
