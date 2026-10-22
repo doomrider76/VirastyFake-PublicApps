@@ -15,6 +15,11 @@
     --glass-bg: rgba(24, 45, 62, 0.65);
     --glass-border: rgba(255, 255, 255, 0.1);
     --font-family: 'CustomFont', sans-serif;
+    
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --header-height: 60px;
+    --tabs-height: 60px;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -26,6 +31,7 @@ body {
     direction: rtl;
     overflow: hidden;
     height: 100vh;
+    height: 100dvh;
 }
 
 button { background: none; border: none; color: inherit; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; }
@@ -35,10 +41,10 @@ svg { width: 24px; height: 24px; }
 .top-header {
     display: flex; justify-content: space-between; align-items: center;
     padding: 10px 16px; 
-    background: rgba(22, 43, 60, 0.65);
+    background: var(--glass-bg);
     backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
-    position: fixed; top: 20px; left: 16px; right: 16px; z-index: 100;
-    border-radius: 30px; height: 60px;
+    position: fixed; top: calc(20px + var(--safe-top)); left: 16px; right: 16px; z-index: 1000;
+    border-radius: 30px; height: var(--header-height);
     border: 1px solid rgba(255, 255, 255, 0.08); border-top-color: rgba(255, 255, 255, 0.2);
     box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
 }
@@ -61,13 +67,16 @@ svg { width: 24px; height: 24px; }
 
 /* تب‌های بالای صفحه */
 .top-tabs-container {
-    position: fixed; top: 90px; left: 16px; right: 16px; height: 60px; z-index: 99; display: flex;
+    position: fixed; top: calc(90px + var(--safe-top)); left: 16px; right: 16px; height: var(--tabs-height); z-index: 999; display: flex;
 }
 
 .top-tabs {
-    display: flex; background-color: #16202A; border: 1px solid #323c45;
+    display: flex; 
+    background: var(--glass-bg); 
+    backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid var(--glass-border); border-top-color: rgba(255,255,255,0.2);
     border-radius: 30px; padding: 5px; width: 100%; height: 100%;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
 }
 
 .tab-btn {
@@ -75,14 +84,14 @@ svg { width: 24px; height: 24px; }
     border-radius: 25px; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center;
 }
 
-.tab-btn.active { color: var(--text-primary); background: rgba(255, 255, 255, 0.08); }
+.tab-btn.active { color: var(--text-primary); background: rgba(255, 255, 255, 0.1); }
 
-/* هدر داخلی (پنل شناور) */
+/* هدر داخلی */
 .sub-header { 
-    display: flex; align-items: center; gap: 16px; padding: 12px 20px; 
+    display: flex; align-items: center; gap: 16px; padding: calc(12px + var(--safe-top)) 20px 12px; 
     background: var(--glass-bg);
     backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
+    border: 1px solid var(--glass-border); border-top: none;
     border-radius: 0 0 24px 24px;
     position: sticky; top: 0; z-index: 10; color: var(--text-primary); 
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
@@ -92,15 +101,17 @@ svg { width: 24px; height: 24px; }
 
 /* ویوها */
 .view {
-    height: 100vh; padding-top: 160px; padding-bottom: 80px; 
+    height: 100vh; height: 100dvh;
+    padding-top: calc(170px + var(--safe-top)); 
+    padding-bottom: calc(80px + var(--safe-bottom)); 
     overflow-y: auto; display: none; background-color: var(--bg-color);
+    overscroll-behavior-y: contain;
 }
 .view.active { display: block; }
 
 #view-profile { padding-top: 0; }
-#view-post-detail, #view-settings { padding-top: 0; } 
+#view-post-detail, #view-settings { padding-top: 0; padding-bottom: calc(20px + var(--safe-bottom)); } 
 
-/* پنل گرد برای محتوای جزئیات توییت */
 #post-detail-content {
     margin: 16px; background: rgba(255, 255, 255, 0.02);
     border: 1px solid var(--border-color); border-radius: 30px; 
@@ -128,138 +139,55 @@ svg { width: 24px; height: 24px; }
 .post-text { font-size: 15px; line-height: 1.6; margin-bottom: 8px; white-space: pre-wrap; word-break: break-word; color: var(--text-primary); }
 .post-img { width: 100%; border-radius: 16px; margin-top: 8px; margin-bottom: 8px; border: 1px solid var(--border-color); max-height: 400px; object-fit: cover; }
 
-/* ========================================= */
-/* سایز تیک آبی بزرگ‌تر و تنظیم جایگاه */
-/* ========================================= */
+/* تیک آبی */
 .verified-icon { 
-    width: 22px; 
-    height: 22px; 
-    object-fit: contain; 
-    display: inline-block; 
-    vertical-align: middle; 
-    transform: translate(2px, 1px); /* 2 پیکسل به راست، 2 پیکسل پایین‌تر از حالت قبل */
-    margin-right: 4px; 
+    width: 22px; height: 22px; object-fit: contain; display: inline-block; vertical-align: middle; 
+    transform: translate(2px, 1px); margin-right: 4px; 
 }
-.verified-icon.lg { 
-    width: 28px; 
-    height: 28px; 
-    transform: translate(2px, 0px); /* 2 پیکسل به راست، 2 پیکسل پایین‌تر از حالت قبل */
-}
-/* ========================================= */
+.verified-icon.lg { width: 28px; height: 28px; transform: translate(2px, 0px); }
 
-/* استایل نظرسنجی (Poll) */
+/* ایموجی‌های ویندوز ۱۱ */
+.emoji-img {
+    width: 1.2em;
+    height: 1.2em;
+    vertical-align: -0.2em;
+    margin: 0 2px;
+    display: inline-block;
+}
+
+/* نظرسنجی */
 .poll-container {
-    margin-top: 12px;
-    margin-bottom: 8px;
-    border: 1px solid var(--border-color);
-    border-radius: 16px;
-    padding: 12px;
-    background: rgba(255,255,255,0.02);
+    margin-top: 12px; margin-bottom: 8px; border: 1px solid var(--border-color);
+    border-radius: 16px; padding: 12px; background: rgba(255,255,255,0.02);
 }
-.poll-question {
-    font-weight: 700;
-    font-size: 15px;
-    margin-bottom: 12px;
-    color: var(--text-primary);
-}
+.poll-question { font-weight: 700; font-size: 15px; margin-bottom: 12px; color: var(--text-primary); }
 .poll-option {
-    position: relative;
-    padding: 10px 12px;
-    margin-bottom: 8px;
-    border-radius: 12px;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid transparent;
-    overflow: hidden;
-    cursor: pointer;
-    transition: all 0.2s;
+    position: relative; padding: 10px 12px; margin-bottom: 8px; border-radius: 12px;
+    background: rgba(255,255,255,0.05); border: 1px solid transparent;
+    overflow: hidden; cursor: pointer; transition: all 0.2s;
 }
-.poll-option:hover {
-    background: rgba(255,255,255,0.1);
-}
-.poll-option.selected {
-    border-color: var(--accent-color);
-}
+.poll-option:hover { background: rgba(255,255,255,0.1); }
+.poll-option.selected { border-color: var(--accent-color); }
 .poll-progress {
-    position: absolute;
-    top: 0;
-    right: 0;
-    height: 100%;
-    background: rgba(29, 155, 240, 0.15);
-    transition: width 0.5s ease-in-out;
-    z-index: 0;
+    position: absolute; top: 0; right: 0; height: 100%;
+    background: rgba(29, 155, 240, 0.15); transition: width 0.5s ease-in-out; z-index: 0;
 }
-.poll-option-content {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 14px;
-}
-.poll-option-text {
-    font-weight: 500;
-}
-.poll-option-percent {
-    font-weight: 700;
-    color: var(--accent-color);
-}
-.poll-footer {
-    font-size: 13px;
-    color: var(--text-secondary);
-    margin-top: 8px;
-    text-align: left;
-}
+.poll-option-content { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+.poll-option-text { font-weight: 500; }
+.poll-option-percent { font-weight: 700; color: var(--accent-color); }
+.poll-footer { font-size: 13px; color: var(--text-secondary); margin-top: 8px; text-align: left; }
 
-/* استایل نوشتن نظرسنجی در مودال */
-.compose-poll-container {
-    padding: 0 16px 16px;
-    background-color: var(--bg-color);
+.compose-poll-container { padding: 0 16px 16px; background-color: var(--bg-color); }
+#poll-question, .poll-option-input {
+    width: 100%; background: transparent; border: 1px solid var(--border-color); color: white;
+    padding: 12px; border-radius: 12px; font-family: inherit; font-size: 15px; margin-bottom: 8px; outline: none;
 }
-#poll-question {
-    width: 100%;
-    background: transparent;
-    border: 1px solid var(--border-color);
-    color: white;
-    padding: 12px;
-    border-radius: 12px;
-    font-family: inherit;
-    font-size: 15px;
-    margin-bottom: 8px;
-    outline: none;
-}
-#poll-question:focus {
-    border-color: var(--accent-color);
-}
-.poll-option-input {
-    width: 100%;
-    background: transparent;
-    border: 1px solid var(--border-color);
-    color: white;
-    padding: 10px 12px;
-    border-radius: 12px;
-    font-family: inherit;
-    font-size: 14px;
-    margin-bottom: 8px;
-    outline: none;
-}
-.poll-option-input:focus {
-    border-color: var(--accent-color);
-}
+#poll-question:focus, .poll-option-input:focus { border-color: var(--accent-color); }
 .btn-add-poll-option {
-    background: transparent;
-    border: 1px dashed var(--border-color);
-    color: var(--accent-color);
-    padding: 8px;
-    border-radius: 12px;
-    width: 100%;
-    font-size: 14px;
-    font-weight: 700;
-    transition: all 0.2s;
+    background: transparent; border: 1px dashed var(--border-color); color: var(--accent-color);
+    padding: 8px; border-radius: 12px; width: 100%; font-size: 14px; font-weight: 700; transition: all 0.2s;
 }
-.btn-add-poll-option:hover {
-    background: rgba(29, 155, 240, 0.1);
-    border-color: var(--accent-color);
-}
+.btn-add-poll-option:hover { background: rgba(29, 155, 240, 0.1); border-color: var(--accent-color); }
 
 /* دکمه دنبال کردن */
 .follow-btn { padding: 6px 14px; border-radius: 20px; background: var(--text-primary); color: var(--bg-color); font-size: 13px; font-weight: 800; margin-right: auto; transition: all 0.2s; }
@@ -275,26 +203,8 @@ svg { width: 24px; height: 24px; }
 .add-reaction-btn:hover { background: rgba(29, 155, 240, 0.1); color: var(--accent-color); }
 .add-reaction-btn svg { width: 16px; height: 16px; }
 
-/* استایل ایموجی‌های ویندوز ۱۱ */
-.reaction-pill img {
-    width: 18px;
-    height: 18px;
-    object-fit: contain;
-    vertical-align: middle;
-    margin-left: 4px;
-}
-
-.reaction-opt img {
-    width: 28px;
-    height: 28px;
-    object-fit: contain;
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-.reaction-opt img:hover {
-    transform: scale(1.2);
-}
+.reaction-opt img { width: 28px; height: 28px; object-fit: contain; cursor: pointer; transition: transform 0.2s; }
+.reaction-opt img:hover { transform: scale(1.2); }
 
 /* دکمه‌های اکشن */
 .post-actions { display: flex; justify-content: space-between; max-width: 400px; color: var(--text-secondary); margin-top: 10px; }
@@ -309,26 +219,17 @@ svg { width: 24px; height: 24px; }
 .action-btn.bookmarked svg { fill: var(--accent-color); stroke: var(--accent-color); }
 
 /* پروفایل */
-.cover-photo { height: 180px; background-size: cover; background-position: center; position: relative; background-color: var(--bg-color); }
-.back-btn { position: absolute; top: 16px; right: 16px; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); color: white; }
-
-.profile-actions-row { 
-    display: flex; justify-content: space-between; align-items: flex-end; 
-    padding: 0 16px; margin-top: 0; position: relative; min-height: 60px; 
+.cover-photo { height: 180px; background-size: cover; background-position: center; position: relative; background-color: var(--bg-color); border-radius: 0 0 20px 20px; }
+.back-btn { 
+    position: absolute; top: calc(16px + var(--safe-top)); right: 16px; 
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); color: white; 
 }
 
-.profile-avatar { 
-    width: 84px; height: 84px; border-radius: 40%; 
-    border: 4px solid var(--bg-color); background: var(--bg-color); 
-    overflow: hidden; margin-top: -46px; 
-}
+.profile-actions-row { display: flex; justify-content: space-between; align-items: flex-end; padding: 0 16px; margin-top: 0; position: relative; min-height: 60px; }
+.profile-avatar { width: 84px; height: 84px; border-radius: 40%; border: 4px solid var(--bg-color); background: var(--bg-color); overflow: hidden; margin-top: -46px; }
 .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
-.btn-edit-profile { 
-    background: transparent; border: 1px solid var(--border-color); 
-    padding: 8px 16px; border-radius: 20px; font-weight: 700; 
-    font-size: 14px; margin-bottom: 8px; color: var(--text-primary); 
-}
+.btn-edit-profile { background: transparent; border: 1px solid var(--border-color); padding: 8px 16px; border-radius: 20px; font-weight: 700; font-size: 14px; margin-bottom: 8px; color: var(--text-primary); }
 .btn-edit-profile:hover { background: rgba(255,255,255,0.1); }
 
 .profile-info { padding: 12px 16px 16px; background-color: var(--bg-color); }
@@ -344,13 +245,24 @@ svg { width: 24px; height: 24px; }
 .ptab { padding: 8px 16px; border-radius: 20px; font-weight: 700; font-size: 15px; color: var(--text-secondary); background: transparent; white-space: nowrap; border: 1px solid transparent; }
 .ptab.active { color: var(--text-primary); background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.1); }
 
-/* دکمه شناور (نوشتن) */
-.fab { position: fixed; bottom: 90px; left: 20px; background: var(--accent-color); color: white; display: flex; align-items: center; gap: 8px; padding: 14px 22px; border-radius: 30px; font-weight: 800; font-size: 16px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); z-index: 90; transition: transform 0.2s; }
+/* دکمه شناور */
+.fab { 
+    position: fixed; bottom: calc(90px + var(--safe-bottom)); left: 20px; 
+    background: var(--accent-color); color: white; display: flex; align-items: center; gap: 8px; 
+    padding: 14px 22px; border-radius: 30px; font-weight: 800; font-size: 16px; 
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); z-index: 90; transition: transform 0.2s; 
+}
 .fab:active { transform: scale(0.92); }
 .fab svg { width: 20px; height: 20px; }
 
-/* نوار پایین (شیشه‌ای) */
-.bottom-nav { position: fixed; bottom: 16px; left: 16px; right: 16px; background: var(--glass-bg); backdrop-filter: blur(24px) saturate(200%); -webkit-backdrop-filter: blur(24px) saturate(200%); border: 1px solid var(--glass-border); border-top-color: rgba(255,255,255,0.2); border-radius: 40px; display: flex; justify-content: space-around; padding: 8px 12px; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1); }
+/* نوار پایین */
+.bottom-nav { 
+    position: fixed; bottom: calc(16px + var(--safe-bottom)); left: 16px; right: 16px; 
+    background: var(--glass-bg); backdrop-filter: blur(24px) saturate(200%); -webkit-backdrop-filter: blur(24px) saturate(200%); 
+    border: 1px solid var(--glass-border); border-top-color: rgba(255,255,255,0.2); 
+    border-radius: 40px; display: flex; justify-content: space-around; padding: 8px 12px; 
+    z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1); 
+}
 .nav-item { color: var(--text-secondary); padding: 8px 12px; border-radius: 20px; transition: all 0.3s; }
 .nav-item.active { color: var(--accent-color); }
 .nav-item.active svg { stroke: var(--accent-color); }
@@ -364,7 +276,7 @@ svg { width: 24px; height: 24px; }
 .notification-item, .setting-item { display: flex; align-items: center; gap: 12px; padding: 16px; border-bottom: 1px solid var(--border-color); font-size: 16px; background-color: var(--bg-color); } 
 .notification-item svg { color: var(--accent-color); width: 20px; height: 20px; }
 
-/* بخش مدیریت اکانت‌ها در تنظیمات */
+/* اکانت‌ها */
 .settings-section { padding: 16px; }
 .account-card { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 16px; margin-bottom: 8px; }
 .account-card.active { border: 1px solid var(--accent-color); background: rgba(29, 155, 240, 0.05); }
@@ -377,13 +289,14 @@ svg { width: 24px; height: 24px; }
 .btn-active-label { font-size: 13px; color: var(--accent-color); font-weight: 700; }
 
 /* مودال‌ها */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 200; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; padding: 16px; }
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 2000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; padding: 16px; }
 .modal-overlay.show { opacity: 1; pointer-events: auto; }
 .modal-content { background: var(--bg-color); border: 1px solid var(--border-color); width: 100%; max-width: 500px; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; transform: translateY(20px); transition: transform 0.3s; }
 .modal-overlay.show .modal-content { transform: translateY(0); }
 .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border-color); }
 .modal-title { font-weight: 800; font-size: 17px; }
 .btn-primary { background: var(--accent-color); color: white; padding: 8px 20px; border-radius: 20px; font-weight: 700; font-size: 15px; }
+.btn-secondary { background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); padding: 8px 20px; border-radius: 20px; font-weight: 700; font-size: 15px; }
 .btn-primary:disabled { opacity: 0.5; }
 .compose-body { display: flex; padding: 16px; gap: 12px; background-color: var(--bg-color); }
 
@@ -417,9 +330,78 @@ svg { width: 24px; height: 24px; }
 .switch input:checked + .slider { background: var(--accent-color); }
 .switch input:checked + .slider:before { transform: translateX(22px); }
 
-.reaction-popup { position: fixed; background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 30px; padding: 8px 12px; display: none; gap: 8px; z-index: 300; box-shadow: 0 10px 30px rgba(0,0,0,0.5); transform: translate(-50%, -50%); }
+.reaction-popup { position: fixed; background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 30px; padding: 8px 12px; display: none; gap: 8px; z-index: 3000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); transform: translate(-50%, -50%); }
 .reaction-popup.show { display: flex; }
-.reaction-opt { font-size: 24px; transition: transform 0.2s; cursor: pointer; }
-.reaction-opt:hover { transform: scale(1.3); }
+
+/* استایل مودال بروزرسانی (Bottom Sheet) */
+#update-modal {
+    align-items: flex-end;
+    padding: 0;
+}
+
+.update-modal-content {
+    background: var(--glass-bg);
+    backdrop-filter: blur(30px) saturate(200%); -webkit-backdrop-filter: blur(30px) saturate(200%);
+    border: 1px solid var(--glass-border); border-bottom: none;
+    border-radius: 24px 24px 0 0;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+    padding: 24px 24px calc(24px + var(--safe-bottom));
+    text-align: center;
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    max-width: 100%;
+}
+
+#update-modal.show .update-modal-content {
+    transform: translateY(0);
+}
+
+.bottom-sheet-handle {
+    width: 40px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    margin: 0 auto 20px auto;
+}
+
+.update-icon { font-size: 50px; margin-bottom: 12px; }
+.update-modal-content h2 { font-size: 22px; font-weight: 900; margin-bottom: 8px; color: var(--accent-color); }
+.update-modal-content p { font-size: 15px; color: var(--text-secondary); margin-bottom: 16px; }
+
+/* اصلاح استایل لیست تغییرات */
+.changelog {
+    text-align: right;
+    background: rgba(0,0,0,0.2);
+    padding: 16px 20px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--text-primary);
+    list-style: none; /* حذف نقطه‌ها */
+}
+.changelog li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+.changelog li:last-child {
+    margin-bottom: 0;
+}
+.changelog .emoji-img {
+    margin-top: 4px;
+    flex-shrink: 0;
+}
+
+.update-actions { display: flex; gap: 12px; justify-content: center; }
+.update-actions button { flex: 1; padding: 14px; font-size: 16px; border-radius: 16px; }
+
+@media (max-width: 380px) {
+    .post-avatar { width: 40px; height: 40px; }
+    .post-name { font-size: 14px; }
+    .post-text { font-size: 14px; }
+    .app-name { font-size: 18px; }
+}
 
 ::-webkit-scrollbar { width: 0px; background: transparent; }
