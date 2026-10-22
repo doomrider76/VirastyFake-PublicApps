@@ -310,11 +310,11 @@ svg { width: 24px; height: 24px; }
 .ptab.active { color: var(--text-primary); background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.1); }
 
 /* ========================================= */
-/* اصلاح فاصله دکمه شناور نوشتن (بالاتر آمد) */
+/* اصلاح فاصله دکمه شناور نوشتن (برگشت به حالت عادی) */
 /* ========================================= */
 .fab { 
     position: fixed; 
-    bottom: calc(22px + var(--safe-bottom) + var(--tabs-height)); 
+    bottom: calc(10px + var(--safe-bottom) + var(--tabs-height)); /* 8 پیکسل بالاتر از منو */
     left: 16px; 
     background: var(--accent-color); color: white; display: flex; align-items: center; gap: 6px; 
     padding: 12px 20px; border-radius: 30px; font-weight: 800; font-size: 16px; 
@@ -324,10 +324,10 @@ svg { width: 24px; height: 24px; }
 .fab span { margin-right: 4px; }
 .fab svg { stroke: white; }
 
-/* نوار پایین (چسبیده به پایین ولی 10 پیکسل بالاتر از لبه) */
+/* نوار پایین (دقیقاً 2 پیکسل بالاتر از لبه فیزیکی) */
 .bottom-nav { 
     position: fixed; 
-    bottom: calc(12px + var(--safe-bottom)) !important; 
+    bottom: calc(2px + var(--safe-bottom)) !important; 
     left: 12px; right: 12px; 
     background: var(--glass-bg); backdrop-filter: blur(24px) saturate(200%); -webkit-backdrop-filter: blur(24px) saturate(200%); 
     border: 1px solid var(--glass-border); border-top-color: rgba(255,255,255,0.2); 
