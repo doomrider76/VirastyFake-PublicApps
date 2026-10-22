@@ -112,14 +112,14 @@ svg { width: 24px; height: 24px; }
 .view {
     height: 100vh; height: 100dvh;
     padding-top: calc(4px + var(--safe-top) + var(--header-height) + 4px + var(--tabs-height) + 4px); 
-    padding-bottom: calc(80px + var(--safe-bottom)); /* فضای کافی برای منوی پایین */
+    padding-bottom: calc(80px + var(--safe-bottom)); 
     overflow-y: auto; display: none; background-color: var(--bg-color);
     overscroll-behavior-y: contain;
 }
 .view.active { display: block; }
 
-#view-profile, #view-messages, #view-post-detail, #view-settings { padding-top: 0; }
-#view-post-detail, #view-settings, #view-messages { padding-bottom: calc(20px + var(--safe-bottom)); } 
+#view-profile, #view-messages, #view-post-detail, #view-settings, #view-chat { padding-top: 0; }
+#view-post-detail, #view-settings, #view-messages, #view-chat { padding-bottom: calc(20px + var(--safe-bottom)); } 
 
 #post-detail-content {
     margin: 16px; background: rgba(255, 255, 255, 0.02);
@@ -268,10 +268,10 @@ svg { width: 24px; height: 24px; }
 .ptab { padding: 8px 16px; border-radius: 20px; font-weight: 700; font-size: 15px; color: var(--text-secondary); background: transparent; white-space: nowrap; border: 1px solid transparent; }
 .ptab.active { color: var(--text-primary); background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.1); }
 
-/* دکمه شناور نوشتن (کاملا چسبیده به منوی پایین) */
+/* دکمه شناور نوشتن (چسبیده به منوی پایین) */
 .fab { 
     position: fixed; 
-    bottom: calc(var(--safe-bottom) + var(--tabs-height) + 6px); /* فقط 6 پیکسل فاصله از منوی پایین */
+    bottom: calc(1px + var(--safe-bottom) + var(--tabs-height) + 6px); 
     left: 16px; 
     background: var(--accent-color); color: white; display: flex; align-items: center; gap: 6px; 
     padding: 12px 20px; border-radius: 30px; font-weight: 800; font-size: 16px; 
@@ -281,10 +281,10 @@ svg { width: 24px; height: 24px; }
 .fab span { margin-right: 4px; }
 .fab svg { stroke: white; }
 
-/* نوار پایین (چسبیده به لبه پایین گوشی) */
+/* نوار پایین (چسبیده به لبه فیزیکی گوشی) */
 .bottom-nav { 
     position: fixed; 
-    bottom: var(--safe-bottom); /* صفر پیکسل فاصله از پایین (به جز نوار خانه آیفون) */
+    bottom: 1px; /* فقط 1 پیکسل فاصله از لبه پایین */
     left: 12px; right: 12px; 
     background: var(--glass-bg); backdrop-filter: blur(24px) saturate(200%); -webkit-backdrop-filter: blur(24px) saturate(200%); 
     border: 1px solid var(--glass-border); border-top-color: rgba(255,255,255,0.2); 
@@ -292,9 +292,25 @@ svg { width: 24px; height: 24px; }
     height: var(--tabs-height);
     z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1); 
 }
-.nav-item { color: var(--text-secondary); padding: 8px 12px; border-radius: 20px; transition: all 0.3s; }
+.nav-item { color: var(--text-secondary); padding: 8px 12px; border-radius: 20px; transition: all 0.3s; position: relative; }
 .nav-item.active { color: var(--accent-color); }
 .nav-item.active svg { stroke: var(--accent-color); }
+
+/* نشانگر پیام‌های خوانده نشده (Badge) */
+.nav-badge {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    background: #f91880;
+    color: white;
+    font-size: 10px;
+    font-weight: 900;
+    border-radius: 10px;
+    padding: 1px 5px;
+    min-width: 16px;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
 
 /* جستجو */
 .search-bar-container { padding: 12px 16px; border-bottom: 1px solid var(--border-color); background-color: var(--bg-color); }
@@ -409,7 +425,7 @@ svg { width: 24px; height: 24px; }
 }
 .post-option-cancel:hover { background: rgba(255,255,255,0.05); color: var(--text-primary); }
 
-/* دایرکت (پیام‌ها) */
+/* دایرکت (لیست پیام‌ها) */
 .dm-item {
     display: flex;
     gap: 12px;
@@ -423,7 +439,66 @@ svg { width: 24px; height: 24px; }
 .dm-header { display: flex; justify-content: space-between; margin-bottom: 4px; }
 .dm-name { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 4px; }
 .dm-time { font-size: 12px; color: var(--text-secondary); }
-.dm-text { font-size: 14px; color: var(--text-secondary); line-height: 1.5; }
+.dm-text { font-size: 14px; color: var(--text-secondary); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* صفحه چت اختصاصی */
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    gap: 12px;
+    height: calc(100dvh - 120px); /* ارتفاع با احتساب هدر */
+    overflow-y: auto;
+}
+.chat-bubble {
+    max-width: 85%;
+    padding: 12px 16px;
+    border-radius: 18px;
+    font-size: 15px;
+    line-height: 1.6;
+    position: relative;
+    word-wrap: break-word;
+}
+.chat-bubble.received {
+    background: rgba(255,255,255,0.08);
+    align-self: flex-start;
+    border-bottom-right-radius: 4px;
+}
+.chat-bubble.sent {
+    background: var(--accent-color);
+    color: white;
+    align-self: flex-end;
+    border-bottom-left-radius: 4px;
+}
+.chat-time {
+    font-size: 11px;
+    margin-top: 6px;
+    opacity: 0.7;
+    text-align: left;
+}
+.chat-input-area {
+    position: fixed;
+    bottom: 1px;
+    left: 0; right: 0;
+    padding: 10px 16px calc(10px + var(--safe-bottom));
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    gap: 10px;
+}
+.chat-input-area input {
+    flex: 1;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 10px 16px;
+    color: white;
+    font-family: inherit;
+    outline: none;
+}
+.chat-input-area input:focus { border-color: var(--accent-color); }
+.chat-input-area .icon-btn { background: var(--accent-color); color: white; border-radius: 50%; width: 42px; height: 42px; }
 
 /* مودال بروزرسانی */
 #update-modal { align-items: flex-end; padding: 0; }
