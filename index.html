@@ -60,35 +60,37 @@
 
     <main id="view-home" class="view active"><div id="feed"></div></main>
 
+    <!-- صفحه جستجو (طراحی جدید) -->
     <main id="view-search" class="view">
-        <div class="search-bar-container">
-            <input type="text" id="search-input" placeholder="جستجو در ویراستی...">
-        </div>
-        <div id="search-results"></div>
-    </main>
-
-    <main id="view-notifications" class="view">
-        <div class="view-title">اعلانات</div>
-        <div class="notification-list">
-            <div class="notification-item"><svg><use href="#i-heart"/></svg> <b>کاربر ۱</b> توییت شما را لایک کرد.</div>
-        </div>
-    </main>
-
-    <!-- لیست پیام‌ها (دایرکت) -->
-    <main id="view-messages" class="view">
-        <header class="floating-sub-header">
-            <button type="button" class="icon-btn" onclick="goBack()"><svg><use href="#i-back"/></svg></button>
-            <span class="view-title-sm">دایرکت (پیام‌ها)</span>
+        <header class="floating-sub-header" style="padding: 0 16px; gap: 8px;">
+            <svg style="width: 20px; height: 20px; color: var(--text-secondary); flex-shrink: 0;"><use href="#i-search"/></svg>
+            <input type="text" id="search-input" placeholder="جستجو در ویراستی..." style="flex: 1; background: transparent; border: none; color: white; font-family: inherit; font-size: 16px; outline: none; padding: 8px 0;">
         </header>
-        <div id="messages-list"></div>
+        <div id="search-results" style="margin-top: 10px;"></div>
     </main>
 
-    <!-- صفحه چت اختصاصی -->
+    <!-- صفحه اعلانات (طراحی جدید) -->
+    <main id="view-notifications" class="view">
+        <header class="floating-sub-header">
+            <span class="view-title-sm">اعلانات</span>
+        </header>
+        <div id="notifications-list" style="margin-top: 10px;"></div>
+    </main>
+
+    <!-- صفحه گفت و گوها -->
+    <main id="view-messages" class="view">
+        <header class="floating-sub-header" style="justify-content: flex-start; gap: 10px; padding-right: 16px;">
+            <img src="" id="messages-header-avatar" style="width: 36px; height: 36px; border-radius: 40%; object-fit: cover; border: 1px solid var(--border-color);">
+            <span class="view-title-sm" style="font-size: 20px; font-weight: 800;">گفت و گوها</span>
+        </header>
+        <div id="messages-list" style="margin-top: 10px;"></div>
+    </main>
+
     <main id="view-chat" class="view">
-        <header class="floating-sub-header" style="justify-content: flex-start; gap: 12px;">
+        <header class="floating-sub-header" style="justify-content: flex-start; gap: 4px; padding-right: 8px;">
             <button type="button" class="icon-btn" onclick="switchView('messages')" style="flex-shrink: 0;"><svg><use href="#i-back"/></svg></button>
-            <div style="display:flex; align-items:center; gap:10px; cursor:pointer; overflow: hidden;" onclick="openUserProfile(activeChatUser)">
-                <img src="Logo.png" id="chat-header-avatar" style="width:42px; height:42px; border-radius:50%; object-fit:cover; border: 2px solid var(--border-color); flex-shrink: 0; background: white;">
+            <div style="display:flex; align-items:center; gap:8px; cursor:pointer; overflow: hidden; padding-right: 4px;" onclick="openUserProfile(activeChatUser)">
+                <img src="Logo.png" id="chat-header-avatar" style="width:38px; height:38px; border-radius:50%; object-fit:cover; border: 2px solid var(--border-color); flex-shrink: 0; background: white;">
                 <div style="display:flex; flex-direction:column; justify-content: center; min-width: 0;">
                     <div style="display:flex; align-items:center; gap:4px; white-space: nowrap;">
                         <span class="view-title-sm" id="chat-header-name" style="font-size:16px; overflow: hidden; text-overflow: ellipsis; font-weight: 800;">پشتیبانی ویراستی</span>
@@ -99,7 +101,6 @@
             </div>
         </header>
         
-        <!-- این باکس برای وسط چین کردن متن خالی است -->
         <div id="chat-messages" class="chat-container"></div>
         
         <div class="chat-input-area">
@@ -110,9 +111,12 @@
         </div>
     </main>
 
+    <!-- صفحه نشانک‌ها (طراحی جدید) -->
     <main id="view-bookmarks" class="view">
-        <div class="view-title">نشانک‌ها</div>
-        <div id="bookmarks-feed"></div>
+        <header class="floating-sub-header">
+            <span class="view-title-sm">نشانک‌ها</span>
+        </header>
+        <div id="bookmarks-feed" style="margin-top: 10px;"></div>
     </main>
 
     <main id="view-profile" class="view">
@@ -150,10 +154,6 @@
     </main>
 
     <main id="view-user-profile" class="view">
-        <header class="floating-sub-header">
-            <button type="button" class="icon-btn" onclick="goBack()"><svg><use href="#i-back"/></svg></button>
-            <span class="view-title-sm">پروفایل کاربر</span>
-        </header>
         <div id="user-profile-content"></div>
     </main>
 
@@ -165,7 +165,6 @@
         <div id="post-detail-content"></div>
     </main>
 
-    <!-- تنظیمات -->
     <main id="view-settings" class="view">
         <header class="floating-sub-header">
             <button type="button" class="icon-btn" onclick="goBack()"><svg><use href="#i-back"/></svg></button>
@@ -204,7 +203,15 @@
                 <button type="button" class="btn-primary" id="btn-submit-post">ارسال</button>
             </div>
             <div class="compose-body">
-                <img src="" class="compose-avatar" id="compose-avatar">
+                <div id="compose-account-selector" style="display: flex; align-items: center; gap: 8px; cursor: pointer;" onclick="openComposeAccountSelector()">
+                    <img src="" class="compose-avatar" id="compose-avatar">
+                    <div style="display: flex; flex-direction: column; justify-content: center;">
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <span id="compose-account-name" style="font-weight: 800; font-size: 15px; color: var(--text-primary);">کاربر</span>
+                        </div>
+                        <span id="compose-account-handle" style="font-size: 13px; color: var(--text-secondary); direction: ltr; text-align: right;">@user</span>
+                    </div>
+                </div>
                 <textarea id="compose-text" placeholder="چه خبر؟" rows="4"></textarea>
             </div>
             
@@ -228,6 +235,18 @@
                     <button type="button" class="icon-btn" id="btn-toggle-poll" style="display:inline-flex; margin-right: 8px;"><svg><use href="#i-chart"/></svg></button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- مودال انتخاب اکانت برای نوشتن -->
+    <div class="modal-overlay" id="compose-account-modal">
+        <div class="modal-content" style="border-radius: 20px; max-height: 60vh;">
+            <div class="modal-header">
+                <button type="button" class="icon-btn close-modal"><svg><use href="#i-close"/></svg></button>
+                <span class="modal-title">انتخاب اکانت</span>
+                <span style="width: 40px;"></span>
+            </div>
+            <div id="compose-account-list" style="padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;"></div>
         </div>
     </div>
 
@@ -321,10 +340,8 @@
         </div>
     </div>
     
-    <!-- منوی سه نقطه ویراست -->
     <div id="post-options-menu" class="post-options-menu"></div>
 
-    <!-- پاپ آپ انتخاب ریکشن -->
     <div id="reaction-popup" class="reaction-popup">
         <span class="reaction-opt" onclick="selectReaction('❤️')"><img src="https://api.iconify.design/fluent-emoji/red-heart.svg" alt="❤️"></span>
         <span class="reaction-opt" onclick="selectReaction('👍')"><img src="https://api.iconify.design/fluent-emoji/thumbs-up.svg" alt="👍"></span>
@@ -333,7 +350,6 @@
         <span class="reaction-opt" onclick="selectReaction('😮')"><img src="https://api.iconify.design/fluent-emoji/face-with-open-mouth.svg" alt="😮"></span>
     </div>
 
-    <!-- مودال بروزرسانی برنامه -->
     <div class="modal-overlay" id="update-modal">
         <div class="modal-content update-modal-content">
             <div class="bottom-sheet-handle"></div>
@@ -341,8 +357,8 @@
             <h2>Virasty بروز شد!</h2>
             <p>نسخه جدید با امکانات و تغییرات زیر در دسترس شماست:</p>
             <ul class="changelog">
-                <li><img src="https://api.iconify.design/fluent-emoji/sparkles.svg" class="emoji-img" alt="✨"> مرتب‌سازی کامل هدر و باکس تایپ صفحه چت</li>
-                <li><img src="https://api.iconify.design/fluent-emoji/wrench.svg" class="emoji-img" alt="🔧"> رفع مشکل نمایش آیدی (RTL) در چت</li>
+                <li><img src="https://api.iconify.design/fluent-emoji/sparkles.svg" class="emoji-img" alt="✨"> طراحی جدید صفحات جستجو، اعلانات و نشانک‌ها</li>
+                <li><img src="https://api.iconify.design/fluent-emoji/sparkles.svg" class="emoji-img" alt="✨"> هماهنگ‌سازی کامل با استایل شناور گفت و گوها</li>
             </ul>
             <div class="update-actions">
                 <button class="btn-primary" id="btn-do-update">بروزرسانی کن</button>
