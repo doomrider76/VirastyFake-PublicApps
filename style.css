@@ -19,7 +19,7 @@
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
     --header-height: 56px; 
-    --tabs-height: 56px; 
+    --tabs-height: 58px; 
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -74,7 +74,7 @@ svg { width: 24px; height: 24px; }
     position: fixed; 
     top: calc(4px + var(--safe-top) + var(--header-height) + 4px); 
     left: 12px; right: 12px; 
-    height: var(--tabs-height); 
+    height: var(--header-height); 
     z-index: 999; 
     display: flex;
 }
@@ -134,19 +134,19 @@ svg { width: 24px; height: 24px; }
 /* ویوها */
 .view {
     height: 100vh; height: 100dvh;
-    padding-top: calc(4px + var(--safe-top) + var(--header-height) + 4px + var(--tabs-height) + 4px); 
-    padding-bottom: calc(80px + var(--safe-bottom)); 
+    padding-top: calc(4px + var(--safe-top) + var(--header-height) + 4px + var(--header-height) + 4px); 
+    padding-bottom: calc(95px + var(--safe-bottom)); /* افزایش فاصله برای منوی شناور جدید */
     overflow-y: auto; display: none; background-color: var(--bg-color);
     overscroll-behavior-y: contain;
 }
 .view.active { display: block; }
 
 /* تنظیمات اختصاصی ویوها برای هدرهای شناور */
-#view-messages, #view-settings, #view-user-profile { padding-top: calc(80px + var(--safe-top)) !important; padding-bottom: calc(80px + var(--safe-bottom)); }
+#view-messages, #view-settings, #view-user-profile { padding-top: calc(80px + var(--safe-top)) !important; padding-bottom: calc(95px + var(--safe-bottom)); }
 #view-profile { padding-top: 0; }
-#view-post-detail { padding-top: 0; padding-bottom: calc(20px + var(--safe-bottom)); } 
+#view-post-detail { padding-top: 0; padding-bottom: calc(30px + var(--safe-bottom)); } 
 
-/* رفع باگ صفحه چت و تنظیم آن دقیقا مثل بخش ویراست‌ها */
+/* رفع باگ صفحه چت */
 #view-chat { padding-top: calc(80px + var(--safe-top)) !important; padding-bottom: 0; height: 100dvh; flex-direction: column; }
 #view-chat.active { display: flex; } 
 
@@ -310,11 +310,11 @@ svg { width: 24px; height: 24px; }
 .ptab.active { color: var(--text-primary); background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.1); }
 
 /* ========================================= */
-/* اصلاح فاصله دکمه شناور نوشتن (برگشت به حالت عادی) */
+/* اصلاح فاصله دکمه شناور نوشتن (شناور مثل پیسفون) */
 /* ========================================= */
 .fab { 
     position: fixed; 
-    bottom: calc(10px + var(--safe-bottom) + var(--tabs-height)); /* 8 پیکسل بالاتر از منو */
+    bottom: calc(84px + var(--safe-bottom)); /* 12px پایین + 58px ارتفاع منو + 14px فاصله */
     left: 16px; 
     background: var(--accent-color); color: white; display: flex; align-items: center; gap: 6px; 
     padding: 12px 20px; border-radius: 30px; font-weight: 800; font-size: 16px; 
@@ -324,21 +324,22 @@ svg { width: 24px; height: 24px; }
 .fab span { margin-right: 4px; }
 .fab svg { stroke: white; }
 
-/* نوار پایین (دقیقاً 2 پیکسل بالاتر از لبه فیزیکی) */
+/* نوار پایین (دقیقاً مثل منوی پیسفون شناور و با فاصله) */
 .bottom-nav { 
     position: fixed; 
-    bottom: calc(2px + var(--safe-bottom)) !important; 
-    left: 12px; right: 12px; 
+    bottom: calc(12px + var(--safe-bottom)); 
+    left: 14px; right: 14px; 
     background: var(--glass-bg); backdrop-filter: blur(24px) saturate(200%); -webkit-backdrop-filter: blur(24px) saturate(200%); 
     border: 1px solid var(--glass-border); border-top-color: rgba(255,255,255,0.2); 
-    border-radius: 40px; display: flex; justify-content: space-around; padding: 6px 12px; 
-    height: var(--tabs-height);
-    z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1); 
+    border-radius: 999px; display: flex; justify-content: space-around; align-items: center; padding: 6px 8px; 
+    height: 58px;
+    z-index: 1000; 
+    box-shadow: 0 8px 32px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.14), inset 0 -1px 0 rgba(0,0,0,.12); 
     margin-bottom: 0; 
 }
 /* ========================================= */
 
-.nav-item { color: var(--text-secondary); padding: 8px 12px; border-radius: 20px; transition: all 0.3s; position: relative; }
+.nav-item { color: var(--text-secondary); padding: 8px 12px; border-radius: 20px; transition: all 0.3s; position: relative; display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; }
 .nav-item.active { color: var(--accent-color); }
 .nav-item.active svg { stroke: var(--accent-color); }
 
@@ -529,11 +530,11 @@ svg { width: 24px; height: 24px; }
     text-align: left;
 }
 
-/* باکس تایپ چت */
+/* باکس تایپ چت (شناور و هماهنگ با منوی پایین) */
 .chat-input-area {
     position: fixed;
-    bottom: calc(2px + var(--safe-bottom));
-    left: 12px; right: 12px;
+    bottom: calc(12px + var(--safe-bottom));
+    left: 14px; right: 14px;
     background: var(--glass-bg);
     backdrop-filter: blur(24px) saturate(200%); -webkit-backdrop-filter: blur(24px) saturate(200%);
     border: 1px solid var(--glass-border); border-top-color: rgba(255,255,255,0.2);
@@ -543,7 +544,7 @@ svg { width: 24px; height: 24px; }
     align-items: center;
     gap: 8px;
     z-index: 1000;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+    box-shadow: 0 8px 32px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.14);
 }
 .chat-input-area input[type="text"] {
     flex: 1;
