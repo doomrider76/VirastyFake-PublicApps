@@ -60,7 +60,6 @@
 
     <main id="view-home" class="view active"><div id="feed"></div></main>
 
-    <!-- صفحه جستجو (طراحی جدید) -->
     <main id="view-search" class="view">
         <header class="floating-sub-header" style="padding: 0 16px; gap: 8px;">
             <svg style="width: 20px; height: 20px; color: var(--text-secondary); flex-shrink: 0;"><use href="#i-search"/></svg>
@@ -69,7 +68,6 @@
         <div id="search-results" style="margin-top: 10px;"></div>
     </main>
 
-    <!-- صفحه اعلانات (طراحی جدید) -->
     <main id="view-notifications" class="view">
         <header class="floating-sub-header">
             <span class="view-title-sm">اعلانات</span>
@@ -77,7 +75,6 @@
         <div id="notifications-list" style="margin-top: 10px;"></div>
     </main>
 
-    <!-- صفحه گفت و گوها -->
     <main id="view-messages" class="view">
         <header class="floating-sub-header" style="justify-content: flex-start; gap: 10px; padding-right: 16px;">
             <img src="" id="messages-header-avatar" style="width: 36px; height: 36px; border-radius: 40%; object-fit: cover; border: 1px solid var(--border-color);">
@@ -111,7 +108,6 @@
         </div>
     </main>
 
-    <!-- صفحه نشانک‌ها (طراحی جدید) -->
     <main id="view-bookmarks" class="view">
         <header class="floating-sub-header">
             <span class="view-title-sm">نشانک‌ها</span>
@@ -125,10 +121,10 @@
                 <button type="button" class="icon-btn back-btn" onclick="switchView('home')"><svg><use href="#i-back"/></svg></button>
             </div>
             <div class="profile-actions-row">
-                <button type="button" class="btn-edit-profile" id="btn-edit-profile">ویرایش پروفایل</button>
                 <div class="profile-avatar" id="profile-avatar">
                     <img src="" alt="Avatar">
                 </div>
+                <button type="button" class="btn-edit-profile" id="btn-edit-profile">ویرایش پروفایل</button>
             </div>
             <div class="profile-info">
                 <h1 class="profile-name" id="profile-name"></h1>
@@ -160,7 +156,7 @@
     <main id="view-post-detail" class="view">
         <header class="sub-header">
             <button type="button" class="icon-btn" onclick="goBack()"><svg><use href="#i-back"/></svg></button>
-            <span class="view-title-sm">توییت</span>
+            <span class="view-title-sm">ویراست</span>
         </header>
         <div id="post-detail-content"></div>
     </main>
@@ -194,7 +190,6 @@
         <button type="button" class="nav-item" onclick="switchView('profile')"><svg><use href="#i-user"/></svg></button>
     </nav>
 
-    <!-- مودال نوشتن/ویرایش توییت -->
     <div class="modal-overlay" id="compose-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -238,7 +233,6 @@
         </div>
     </div>
 
-    <!-- مودال انتخاب اکانت برای نوشتن -->
     <div class="modal-overlay" id="compose-account-modal">
         <div class="modal-content" style="border-radius: 20px; max-height: 60vh;">
             <div class="modal-header">
@@ -250,7 +244,6 @@
         </div>
     </div>
 
-    <!-- مودال پیام جدید -->
     <div class="modal-overlay" id="new-chat-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -267,7 +260,6 @@
         </div>
     </div>
 
-    <!-- مودال ویرایش پروفایل -->
     <div class="modal-overlay" id="edit-profile-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -308,7 +300,6 @@
         </div>
     </div>
 
-    <!-- مودال ساخت اکانت جدید -->
     <div class="modal-overlay" id="add-account-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -325,7 +316,6 @@
         </div>
     </div>
 
-    <!-- مودال ارسال اخطار -->
     <div class="modal-overlay" id="warn-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -350,15 +340,17 @@
         <span class="reaction-opt" onclick="selectReaction('😮')"><img src="https://api.iconify.design/fluent-emoji/face-with-open-mouth.svg" alt="😮"></span>
     </div>
 
+    <!-- مودال بروزرسانی برنامه -->
     <div class="modal-overlay" id="update-modal">
         <div class="modal-content update-modal-content">
             <div class="bottom-sheet-handle"></div>
-            <div class="update-icon">🚀</div>
-            <h2>Virasty بروز شد!</h2>
+            <div class="update-icon">🎉</div>
+            <h2>ویراستی بروزرسانی شد!</h2>
             <p>نسخه جدید با امکانات و تغییرات زیر در دسترس شماست:</p>
             <ul class="changelog">
-                <li><img src="https://api.iconify.design/fluent-emoji/sparkles.svg" class="emoji-img" alt="✨"> طراحی جدید صفحات جستجو، اعلانات و نشانک‌ها</li>
-                <li><img src="https://api.iconify.design/fluent-emoji/sparkles.svg" class="emoji-img" alt="✨"> هماهنگ‌سازی کامل با استایل شناور گفت و گوها</li>
+                <li><img src="https://api.iconify.design/fluent-emoji/sparkles.svg" class="emoji-img" alt="✨">محیط کاملا ایرانیزه</li>
+                <li><img src="https://api.iconify.design/fluent-emoji/sparkles.svg" class="emoji-img" alt="🌷">محیط کاملا پاک و به دور از حاشیه</li>
+                <li><img src="https://api.iconify.design/fluent-emoji/sparkles.svg" class="emoji-img" alt="📣">کاملا سبک و روان و بدونه ایراد</li>
             </ul>
             <div class="update-actions">
                 <button class="btn-primary" id="btn-do-update">بروزرسانی کن</button>
@@ -366,6 +358,9 @@
             </div>
         </div>
     </div>
+    
+    <!-- کانتینر اعلانات شناور داخلی -->
+    <div id="toast-container"></div>
 </div>
 
 <script src="script.js"></script>
