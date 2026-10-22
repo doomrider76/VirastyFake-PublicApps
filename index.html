@@ -10,7 +10,6 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#16202a">
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -38,7 +37,7 @@
             <img src="" alt="Profile" class="header-avatar" id="header-avatar">
         </div>
         <div class="header-center">
-            <span class="app-name">ویراستی</span>
+            <span class="app-name">ویــراستـی</span>
         </div>
         <div class="header-left">
             <button type="button" class="icon-btn" onclick="switchView('settings')"><svg><use href="#i-settings"/></svg></button>
@@ -115,11 +114,17 @@
         <div id="post-detail-content"></div>
     </main>
 
+    <!-- تنظیمات (شامل مدیریت حساب‌ها) -->
     <main id="view-settings" class="view">
         <header class="sub-header">
             <button type="button" class="icon-btn" onclick="goBack()"><svg><use href="#i-back"/></svg></button>
             <span class="view-title-sm">تنظیمات</span>
         </header>
+        <div class="settings-section">
+            <h3 style="margin-bottom: 12px; font-size: 18px; font-weight: 800;">مدیریت حساب‌ها</h3>
+            <div id="account-list" style="margin-bottom: 16px;"></div>
+            <button class="btn-primary" onclick="document.getElementById('add-account-modal').classList.add('show')" style="width: 100%; padding: 12px;">افزودن اکانت جدید</button>
+        </div>
     </main>
 
     <button type="button" class="fab" id="btn-compose">
@@ -146,13 +151,27 @@
                 <img src="" class="compose-avatar" id="compose-avatar">
                 <textarea id="compose-text" placeholder="چه خبر؟" rows="4"></textarea>
             </div>
+            
+            <!-- بخش نظرسنجی -->
+            <div class="compose-poll-container" id="compose-poll-container" style="display: none;">
+                <input type="text" id="poll-question" placeholder="سوال نظرسنجی شما چیست؟">
+                <div id="poll-options-list">
+                    <input type="text" class="poll-option-input" placeholder="گزینه ۱">
+                    <input type="text" class="poll-option-input" placeholder="گزینه ۲">
+                </div>
+                <button type="button" class="btn-add-poll-option" id="btn-add-poll-option">+ افزودن گزینه</button>
+            </div>
+
             <div class="compose-image-preview" id="compose-image-preview" style="display:none;">
                 <img id="preview-img" src="">
                 <button type="button" class="remove-img" id="btn-remove-img"><svg><use href="#i-close"/></svg></button>
             </div>
-            <div class="compose-footer">
-                <label for="upload-image" class="icon-btn"><svg><use href="#i-image"/></svg></label>
-                <input type="file" id="upload-image" accept="image/*" hidden>
+            <div class="compose-footer" style="justify-content: space-between;">
+                <div>
+                    <label for="upload-image" class="icon-btn" style="display:inline-flex;"><svg><use href="#i-image"/></svg></label>
+                    <input type="file" id="upload-image" accept="image/*" hidden>
+                    <button type="button" class="icon-btn" id="btn-toggle-poll" style="display:inline-flex; margin-right: 8px;"><svg><use href="#i-chart"/></svg></button>
+                </div>
             </div>
         </div>
     </div>
@@ -163,7 +182,6 @@
             <div class="modal-header">
                 <button type="button" class="icon-btn close-modal"><svg><use href="#i-close"/></svg></button>
                 <span class="modal-title">ویرایش پروفایل</span>
-                <!-- دکمه ذخیره با تایپ باتن -->
                 <button type="button" class="btn-primary" id="btn-save-profile">ذخیره</button>
             </div>
             <div class="edit-profile-body">
@@ -172,9 +190,7 @@
                     <input type="file" id="upload-cover" accept="image/*" hidden>
                 </div>
                 <div class="edit-avatar-wrap">
-                    <div class="edit-avatar" id="edit-avatar-preview">
-                        <!-- اینجا با JS آپدیت میشه -->
-                    </div>
+                    <div class="edit-avatar" id="edit-avatar-preview"></div>
                 </div>
                 <div class="edit-form">
                     <label>نام</label>
@@ -205,6 +221,32 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- مودال ساخت اکانت جدید -->
+    <div class="modal-overlay" id="add-account-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="icon-btn close-modal"><svg><use href="#i-close"/></svg></button>
+                <span class="modal-title">ساخت اکانت جدید</span>
+                <button type="button" class="btn-primary" id="btn-create-account">ایجاد</button>
+            </div>
+            <div class="edit-form">
+                <label>نام نمایشی</label>
+                <input type="text" id="new-account-name" placeholder="نام شما">
+                <label>نام کاربری (آیدی)</label>
+                <input type="text" id="new-account-handle" placeholder="مثلا user2" dir="ltr" style="text-align:left;">
+            </div>
+        </div>
+    </div>
+    
+    <!-- پاپ آپ انتخاب ریکشن (ایموجی های ویندوز ۱۱) -->
+    <div id="reaction-popup" class="reaction-popup">
+        <span class="reaction-opt" onclick="selectReaction('❤️')"><img src="https://api.iconify.design/fluent-emoji/red-heart.svg" alt="❤️"></span>
+        <span class="reaction-opt" onclick="selectReaction('👍')"><img src="https://api.iconify.design/fluent-emoji/thumbs-up.svg" alt="👍"></span>
+        <span class="reaction-opt" onclick="selectReaction('😂')"><img src="https://api.iconify.design/fluent-emoji/face-with-tears-of-joy.svg" alt="😂"></span>
+        <span class="reaction-opt" onclick="selectReaction('🔥')"><img src="https://api.iconify.design/fluent-emoji/fire.svg" alt="🔥"></span>
+        <span class="reaction-opt" onclick="selectReaction('😮')"><img src="https://api.iconify.design/fluent-emoji/face-with-open-mouth.svg" alt="😮"></span>
     </div>
 </div>
 
