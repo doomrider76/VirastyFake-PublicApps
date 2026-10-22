@@ -35,159 +35,76 @@ body {
 button { background: none; border: none; color: inherit; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; }
 svg { width: 24px; height: 24px; }
 
-/* هدر شناور اصلی */
 .top-header {
     display: flex; justify-content: space-between; align-items: center;
     padding: 10px 16px; 
     background: var(--glass-bg);
     backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
     position: fixed; 
-    top: 12px;
-    left: 12px; right: 12px; 
+    top: 12px; left: 12px; right: 12px; 
     z-index: 1000;
     border-radius: 30px; 
     height: var(--header-height);
     border: 1px solid rgba(255, 255, 255, 0.08); border-top-color: rgba(255, 255, 255, 0.2);
     box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
 }
-
 .header-right, .header-left { display: flex; align-items: center; justify-content: center; }
 .header-center { display: flex; align-items: center; justify-content: center; height: 100%; }
-
-.app-name { 
-    font-size: 20px; font-weight: 900; 
-    background: linear-gradient(90deg, #f7f9f9, #8bb4d9); 
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
-    filter: drop-shadow(0 2px 8px rgba(29, 155, 240, 0.4));
-}
-
+.app-name { font-size: 20px; font-weight: 900; background: linear-gradient(90deg, #f7f9f9, #8bb4d9); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 2px 8px rgba(29, 155, 240, 0.4)); }
 .header-avatar { width: 38px; height: 38px; border-radius: 40%; object-fit: cover; border: 2px solid rgba(255,255,255,0.2); transition: transform 0.2s; }
 .header-avatar:active { transform: scale(0.9); }
-
-.icon-btn { width: 40px; height: 40px; border-radius: 50%; transition: background 0.2s; color: var(--text-primary); }
+.icon-btn { width: 40px; height: 40px; border-radius: 50%; transition: background 0.2s; color: var(--text-primary); display: flex; align-items: center; justify-content: center; }
 .icon-btn:hover { background: rgba(255, 255, 255, 0.1); }
 
-/* تب‌های بالای صفحه */
-.top-tabs-container {
-    position: fixed; 
-    top: calc(12px + var(--header-height) + 8px); 
-    left: 12px; right: 12px; 
-    height: var(--header-height); 
-    z-index: 999; 
-    display: flex;
-}
-
-.top-tabs {
-    display: flex; 
-    background: var(--glass-bg); 
-    backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid var(--glass-border); border-top-color: rgba(255,255,255,0.2);
-    border-radius: 30px; padding: 5px; width: 100%; height: 100%;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
-}
-
-.tab-btn {
-    flex: 1; height: 100%; font-size: 15px; font-weight: 700; color: var(--text-secondary);
-    border-radius: 25px; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center;
-}
-
+.top-tabs-container { position: fixed; top: calc(12px + var(--header-height) + 5px); left: 12px; right: 12px; height: var(--header-height); z-index: 999; display: flex; }
+.top-tabs { display: flex; background: var(--glass-bg); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border: 1px solid var(--glass-border); border-top-color: rgba(255,255,255,0.2); border-radius: 30px; padding: 5px; width: 100%; height: 100%; box-shadow: 0 8px 32px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1); }
+.tab-btn { flex: 1; height: 100%; font-size: 15px; font-weight: 700; color: var(--text-secondary); border-radius: 25px; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; }
 .tab-btn.active { color: var(--text-primary); background: rgba(255, 255, 255, 0.1); }
 
-/* هدرهای شناور داخلی */
-.floating-sub-header { 
-    display: flex; align-items: center; justify-content: flex-start; gap: 12px; padding: 10px 16px; 
-    background: var(--glass-bg);
-    backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
-    position: fixed; 
-    top: 12px;
-    left: 12px; right: 12px; 
-    z-index: 1000;
-    border-radius: 30px; 
-    height: var(--header-height);
-    border: 1px solid rgba(255, 255, 255, 0.08); border-top-color: rgba(255, 255, 255, 0.2);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
-}
-.floating-sub-header .view-title-sm {
-    font-size: 20px; font-weight: 900;
-    background: linear-gradient(90deg, #f7f9f9, #8bb4d9); 
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
-}
-
-/* هدرهای داخلی عادی */
-.sub-header { 
-    display: flex; align-items: center; gap: 16px; padding: 12px 20px; 
-    background: var(--glass-bg);
-    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border); border-top: none;
-    border-radius: 0 0 24px 24px;
-    position: sticky; top: 0; z-index: 10; color: var(--text-primary); 
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-}
+.floating-sub-header { display: flex; align-items: center; justify-content: flex-start; gap: 12px; padding: 10px 16px; background: var(--glass-bg); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); position: fixed; top: 12px; left: 12px; right: 12px; z-index: 1000; border-radius: 30px; height: var(--header-height); border: 1px solid rgba(255, 255, 255, 0.08); border-top-color: rgba(255, 255, 255, 0.2); box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1); }
+.floating-sub-header .view-title-sm { font-size: 20px; font-weight: 900; background: linear-gradient(90deg, #f7f9f9, #8bb4d9); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.sub-header { display: flex; align-items: center; gap: 16px; padding: 12px 20px; background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-top: none; border-radius: 0 0 24px 24px; position: sticky; top: 0; z-index: 10; color: var(--text-primary); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
 .view-title-sm { font-weight: 800; font-size: 20px; }
-.view-title { font-size: 22px; font-weight: 800; padding: 16px; border-bottom: 1px solid var(--border-color); background-color: var(--bg-color); }
 
-/* ویوها */
-.view {
-    height: 100vh; height: 100dvh;
-    padding-top: calc(12px + var(--header-height) + 8px + var(--header-height) + 8px); 
-    padding-bottom: 80px; /* فضا برای منوی پایین */
-    overflow-y: auto; display: none; background-color: var(--bg-color);
-    overscroll-behavior-y: contain;
-}
+.view { height: 100vh; height: 100dvh; padding-top: calc(12px + var(--header-height) + 5px + var(--header-height) + 5px); padding-bottom: 80px; overflow-y: auto; display: none; background-color: var(--bg-color); overscroll-behavior-y: contain; }
 .view.active { display: block; }
 
-/* تنظیمات اختصاصی ویوها */
-#view-messages, #view-settings, #view-user-profile { padding-top: calc(12px + var(--header-height) + 8px) !important; padding-bottom: 80px; }
+/* تنظیمات فاصله برای صفحات جدید */
+#view-search, #view-messages, #view-notifications, #view-bookmarks, #view-settings { padding-top: calc(12px + var(--header-height) + 5px) !important; padding-bottom: 80px; }
+#view-user-profile { padding-top: 0 !important; padding-bottom: 80px; }
 #view-profile { padding-top: 0; }
 #view-post-detail { padding-top: 0; padding-bottom: 30px; } 
-
-/* صفحه چت */
-#view-chat { padding-top: calc(12px + var(--header-height) + 8px) !important; padding-bottom: 0; height: 100dvh; flex-direction: column; }
+#view-chat { padding-top: calc(12px + var(--header-height) + 5px) !important; padding-bottom: 0; height: 100dvh; flex-direction: column; }
 #view-chat.active { display: flex; } 
 
-#post-detail-content {
-    margin: 16px; background: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--border-color); border-radius: 30px; 
-    overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-}
+#post-detail-content { margin: 16px; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 30px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+#feed, #profile-feed, #search-results, #bookmarks-feed, #messages-list, #notifications-list { display: flex; flex-direction: column; background-color: var(--bg-color); }
 
-#feed, #profile-feed, #search-results, #bookmarks-feed, #messages-list { display: flex; flex-direction: column; background-color: var(--bg-color); }
-
-/* حالت خالی */
 .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; text-align: center; color: var(--text-secondary); flex: 1; }
 .empty-state svg { width: 64px; height: 64px; margin-bottom: 16px; opacity: 0.5; stroke-width: 1.5; }
 .empty-state h3 { font-size: 20px; font-weight: 800; color: var(--text-primary); margin-bottom: 8px; }
 .empty-state p { font-size: 15px; line-height: 1.6; }
 
-/* پست‌ها */
 .post { display: flex; padding: 16px; border-bottom: 1px solid var(--border-color); background-color: var(--bg-color); transition: background 0.2s; cursor: pointer; position: relative; }
 .post:hover { background: rgba(255, 255, 255, 0.03); }
-
 .post-avatar { width: 48px; height: 48px; border-radius: 40%; margin-left: 12px; overflow: hidden; flex-shrink: 0; border: 1px solid var(--border-color); }
 .post-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .post-content { flex: 1; min-width: 0; }
 .post-header { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; flex-wrap: wrap; }
-.post-name { font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 4px; color: var(--text-primary); }
+.post-name { font-weight: 800; font-size: 16px; color: var(--text-primary); }
 .post-handle, .post-time { color: var(--text-secondary); font-size: 14px; }
 .post-text { font-size: 15px; line-height: 1.6; margin-bottom: 8px; white-space: pre-wrap; word-break: break-word; color: var(--text-primary); }
 .post-img { width: 100%; border-radius: 16px; margin-top: 8px; margin-bottom: 8px; border: 1px solid var(--border-color); max-height: 400px; object-fit: cover; }
-
 .post-more-btn { margin-right: auto; color: var(--text-secondary); padding: 4px; border-radius: 50%; transition: all 0.2s; }
 .post-more-btn:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
 .post-more-btn svg { width: 20px; height: 20px; }
 
-/* تیک آبی */
-.verified-icon { width: 22px; height: 22px; object-fit: contain; display: inline-block; vertical-align: middle; transform: translate(2px, 1px); margin-right: 4px; }
-.verified-icon.lg { width: 28px; height: 28px; transform: translate(2px, 0px); }
-
-/* ایموجی‌های ویندوز ۱۱ */
+.verified-icon { width: 20px; height: 20px; object-fit: contain; display: inline-block; vertical-align: middle; margin-right: 2px; }
+.verified-icon.lg { width: 26px; height: 26px; }
 .emoji-img { width: 1.2em; height: 1.2em; vertical-align: -0.2em; margin: 0 2px; display: inline-block; }
-
-/* منشن ها */
 .mention { color: var(--accent-color); font-weight: 600; cursor: pointer; direction: ltr; display: inline-block; }
 .mention:hover { text-decoration: underline; }
 
-/* نظرسنجی */
 .poll-container { margin-top: 12px; margin-bottom: 8px; border: 1px solid var(--border-color); border-radius: 16px; padding: 12px; background: rgba(255,255,255,0.02); }
 .poll-question { font-weight: 700; font-size: 15px; margin-bottom: 12px; color: var(--text-primary); }
 .poll-option { position: relative; padding: 10px 12px; margin-bottom: 8px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid transparent; overflow: hidden; cursor: pointer; transition: all 0.2s; }
@@ -205,11 +122,6 @@ svg { width: 24px; height: 24px; }
 .btn-add-poll-option { background: transparent; border: 1px dashed var(--border-color); color: var(--accent-color); padding: 8px; border-radius: 12px; width: 100%; font-size: 14px; font-weight: 700; transition: all 0.2s; }
 .btn-add-poll-option:hover { background: rgba(29, 155, 240, 0.1); border-color: var(--accent-color); }
 
-/* دکمه دنبال کردن */
-.follow-btn { padding: 6px 14px; border-radius: 20px; background: var(--text-primary); color: var(--bg-color); font-size: 13px; font-weight: 800; margin-right: auto; transition: all 0.2s; }
-.follow-btn:hover { opacity: 0.8; }
-
-/* ریکشن‌ها */
 .post-reactions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; margin-bottom: 4px; }
 .reaction-pill { display: flex; align-items: center; gap: 4px; padding: 4px 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 20px; font-size: 13px; color: var(--text-primary); transition: all 0.2s; }
 .reaction-pill:hover { background: rgba(255,255,255,0.1); }
@@ -218,11 +130,9 @@ svg { width: 24px; height: 24px; }
 .add-reaction-btn { padding: 4px 10px; background: transparent; border: 1px solid transparent; border-radius: 20px; color: var(--text-secondary); transition: all 0.2s; }
 .add-reaction-btn:hover { background: rgba(29, 155, 240, 0.1); color: var(--accent-color); }
 .add-reaction-btn svg { width: 16px; height: 16px; }
-
 .reaction-opt img { width: 28px; height: 28px; object-fit: contain; cursor: pointer; transition: transform 0.2s; }
 .reaction-opt img:hover { transform: scale(1.2); }
 
-/* دکمه‌های اکشن */
 .post-actions { display: flex; justify-content: space-between; max-width: 400px; color: var(--text-secondary); margin-top: 10px; }
 .action-btn { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; padding: 4px 8px; border-radius: 20px; transition: all 0.2s; color: var(--text-secondary); }
 .action-btn svg { width: 18px; height: 18px; }
@@ -234,21 +144,18 @@ svg { width: 24px; height: 24px; }
 .action-btn.bookmarked { color: var(--accent-color); }
 .action-btn.bookmarked svg { fill: var(--accent-color); stroke: var(--accent-color); }
 
-/* پروفایل */
-.cover-photo { height: 180px; background-size: cover; background-position: center; position: relative; background-color: var(--bg-color); border-radius: 0 0 20px 20px; }
-.back-btn { position: absolute; top: 16px; right: 16px; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); color: white; }
-
+/* هدر پروفایل (کاور) */
+.cover-photo { height: 180px; background-size: cover; background-position: center; background-color: #0d151c; position: relative; border-radius: 0; overflow: hidden; }
+.back-btn { position: absolute; top: 16px; right: 16px; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); color: white; z-index: 2; }
 .profile-actions-row { display: flex; justify-content: space-between; align-items: flex-end; padding: 0 16px; margin-top: 0; position: relative; min-height: 60px; }
 .profile-avatar { width: 84px; height: 84px; border-radius: 40%; border: 4px solid var(--bg-color); background: var(--bg-color); overflow: hidden; margin-top: -46px; }
 .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
-
 .btn-edit-profile { background: transparent; border: 1px solid var(--border-color); padding: 8px 16px; border-radius: 20px; font-weight: 700; font-size: 14px; margin-bottom: 8px; color: var(--text-primary); }
 .btn-edit-profile:hover { background: rgba(255,255,255,0.1); }
-
 .profile-info { padding: 12px 16px 16px; background-color: var(--bg-color); }
 .profile-name { font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
 .profile-handle { color: var(--text-secondary); font-size: 15px; }
-.profile-bio { font-size: 15px; margin-top: 12px; line-height: 1.6; }
+.profile-bio { font-size: 15px; margin-top: 12px; line-height: 1.6; white-space: pre-wrap; }
 .profile-stats { display: flex; gap: 16px; margin-top: 12px; font-size: 15px; color: var(--text-secondary); }
 .profile-stats b { color: var(--text-primary); font-weight: 700; }
 .profile-meta { margin-top: 12px; color: var(--text-secondary); font-size: 15px; display: flex; align-items: center; gap: 6px; }
@@ -258,69 +165,20 @@ svg { width: 24px; height: 24px; }
 .ptab { padding: 8px 16px; border-radius: 20px; font-weight: 700; font-size: 15px; color: var(--text-secondary); background: transparent; white-space: nowrap; border: 1px solid transparent; }
 .ptab.active { color: var(--text-primary); background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.1); }
 
-/* ========================================= */
-/* دکمه شناور نوشتن (شناور بالای منو) */
-/* ========================================= */
-.fab { 
-    position: fixed; 
-    bottom: 82px; /* 12px فاصله منو + 58px ارتفاع + 12px فاصله */
-    left: 16px; 
-    background: var(--accent-color); color: white; display: flex; align-items: center; gap: 6px; 
-    padding: 12px 20px; border-radius: 30px; font-weight: 800; font-size: 16px; 
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); z-index: 90; transition: transform 0.2s; 
-}
+.fab { position: fixed; bottom: 82px; left: 16px; background: var(--accent-color); color: white; display: flex; align-items: center; gap: 6px; padding: 12px 20px; border-radius: 30px; font-weight: 800; font-size: 16px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); z-index: 90; transition: transform 0.2s; }
 .fab:active { transform: scale(0.92); }
 .fab span { margin-right: 4px; }
 .fab svg { stroke: white; }
 
-/* منوی پایین (دقیقاً مثل عکسی که فرستادی، شناور با فاصله کم) */
-.bottom-nav { 
-    position: fixed; 
-    bottom: 12px; /* دقیقاً 12 پیکسل از پایین */
-    left: 14px; right: 14px; 
-    background: var(--glass-bg); backdrop-filter: blur(24px) saturate(200%); -webkit-backdrop-filter: blur(24px) saturate(200%); 
-    border: 1px solid var(--glass-border); border-top-color: rgba(255,255,255,0.2); 
-    border-radius: 999px; /* کاملا گرد و کپسولی */
-    display: flex; justify-content: space-around; align-items: center; padding: 6px 8px; 
-    height: 58px;
-    z-index: 1000; 
-    box-shadow: 0 8px 32px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.14), inset 0 -1px 0 rgba(0,0,0,.12); 
-    margin-bottom: 0; 
-}
-/* ========================================= */
-
+.bottom-nav { position: fixed; bottom: 12px; left: 14px; right: 14px; background: var(--glass-bg); backdrop-filter: blur(24px) saturate(200%); -webkit-backdrop-filter: blur(24px) saturate(200%); border: 1px solid var(--glass-border); border-top-color: rgba(255,255,255,0.2); border-radius: 999px; display: flex; justify-content: space-around; align-items: center; padding: 6px 8px; height: 58px; z-index: 1000; box-shadow: 0 8px 32px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.14), inset 0 -1px 0 rgba(0,0,0,.12); margin-bottom: 0; }
 .nav-item { color: var(--text-secondary); padding: 8px 12px; border-radius: 20px; transition: all 0.3s; position: relative; display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; }
 .nav-item.active { color: var(--accent-color); }
 .nav-item.active svg { stroke: var(--accent-color); }
-
-/* نشانگر پیام‌های خوانده نشده (Badge) */
-.nav-badge {
-    position: absolute;
-    top: 2px;
-    right: 4px;
-    background: #f91880;
-    color: white;
-    font-size: 10px;
-    font-weight: 900;
-    border-radius: 10px;
-    padding: 1px 5px;
-    min-width: 16px;
-    text-align: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-}
-
-/* جستجو */
-.search-bar-container { padding: 12px 16px; border-bottom: 1px solid var(--border-color); background-color: var(--bg-color); }
-#search-input { width: 100%; background: transparent; border: 1px solid var(--border-color); color: white; padding: 12px 16px; border-radius: 20px; font-family: inherit; font-size: 16px; outline: none; }
-#search-input:focus { border-color: var(--accent-color); background: rgba(255,255,255,0.03); }
+.nav-badge { position: absolute; top: 2px; right: 4px; background: #f91880; color: white; font-size: 10px; font-weight: 900; border-radius: 10px; padding: 1px 5px; min-width: 16px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
 
 /* تنظیمات و اعلانات */
-.notification-item, .setting-item { display: flex; align-items: center; gap: 12px; padding: 16px; border-bottom: 1px solid var(--border-color); font-size: 16px; background-color: var(--bg-color); } 
-.notification-item svg { color: var(--accent-color); width: 20px; height: 20px; }
-
-/* اکانت‌ها */
 .settings-section { padding: 16px; }
-.account-card { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 16px; margin-bottom: 8px; }
+.account-card { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 16px; margin-bottom: 8px; cursor: pointer; }
 .account-card.active { border: 1px solid var(--accent-color); background: rgba(29, 155, 240, 0.05); }
 .account-info { display: flex; align-items: center; gap: 12px; }
 .account-avatar { width: 40px; height: 40px; border-radius: 40%; object-fit: cover; }
@@ -329,6 +187,42 @@ svg { width: 24px; height: 24px; }
 .account-handle { font-size: 13px; color: var(--text-secondary); }
 .btn-switch { padding: 6px 12px; border-radius: 16px; background: var(--accent-color); color: white; font-size: 13px; font-weight: 700; }
 .btn-active-label { font-size: 13px; color: var(--accent-color); font-weight: 700; }
+
+/* استایل لیست اعلانات (شبیه به دایرکت) */
+.notification-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--bg-color);
+    transition: background 0.2s;
+    cursor: pointer;
+}
+.notification-item:hover { background: rgba(255,255,255,0.03); }
+.notification-icon {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(29, 155, 240, 0.1);
+    color: var(--accent-color);
+    flex-shrink: 0;
+}
+.notification-icon svg { width: 22px; height: 22px; }
+.notification-content { flex: 1; }
+.notification-text { font-size: 15px; line-height: 1.5; color: var(--text-primary); }
+.notification-text b { font-weight: 800; }
+.notification-time { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+/* استایل باکس جستجو در هدر */
+#view-search .floating-sub-header input {
+    color: var(--text-primary);
+    caret-color: var(--accent-color);
+}
+#view-search .floating-sub-header input::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.8;
+}
 
 /* مودال‌ها */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 2000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; padding: 16px; }
@@ -340,10 +234,10 @@ svg { width: 24px; height: 24px; }
 .btn-primary { background: var(--accent-color); color: white; padding: 8px 20px; border-radius: 20px; font-weight: 700; font-size: 15px; }
 .btn-secondary { background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); padding: 8px 20px; border-radius: 20px; font-weight: 700; font-size: 15px; }
 .btn-primary:disabled { opacity: 0.5; }
-.compose-body { display: flex; padding: 16px; gap: 12px; background-color: var(--bg-color); }
 
+.compose-body { display: flex; flex-direction: column; padding: 16px; gap: 12px; background-color: var(--bg-color); }
 .compose-avatar { width: 44px; height: 44px; border-radius: 40%; object-fit: cover; }
-#compose-text { flex: 1; background: transparent; border: none; color: white; font-size: 18px; resize: none; outline: none; font-family: inherit; padding-top: 8px; }
+#compose-text { width: 100%; background: transparent; border: none; color: white; font-size: 18px; resize: none; outline: none; font-family: inherit; padding-top: 4px; }
 .compose-image-preview { padding: 0 16px 16px; position: relative; background-color: var(--bg-color); }
 .compose-image-preview img { width: 100%; border-radius: 16px; max-height: 300px; object-fit: cover; }
 .remove-img { position: absolute; top: 8px; left: 24px; background: rgba(0,0,0,0.7); color: white; border-radius: 50%; width: 30px; height: 30px; }
@@ -354,7 +248,6 @@ svg { width: 24px; height: 24px; }
 .edit-cover-btn, .edit-avatar-btn { position: absolute; background: rgba(0,0,0,0.6); border-radius: 50%; padding: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .edit-cover-btn { top: 50%; left: 50%; transform: translate(-50%, -50%); }
 .edit-avatar-wrap { padding: 0 16px; margin-top: -40px; position: relative; }
-
 .edit-avatar { width: 84px; height: 84px; border-radius: 40%; border: 4px solid var(--bg-color); overflow: hidden; background: var(--bg-color); position: relative; }
 .edit-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .edit-avatar-btn { top: 50%; left: 50%; transform: translate(-50%, -50%); }
@@ -375,61 +268,17 @@ svg { width: 24px; height: 24px; }
 .reaction-popup { position: fixed; background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 30px; padding: 8px 12px; display: none; gap: 8px; z-index: 3000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); transform: translate(-50%, -50%); }
 .reaction-popup.show { display: flex; }
 
-/* استایل منوی سه نقطه (Bottom Sheet) */
-.post-options-menu {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    background: var(--glass-bg);
-    backdrop-filter: blur(25px) saturate(200%); -webkit-backdrop-filter: blur(25px) saturate(200%);
-    border: 1px solid var(--glass-border); border-bottom: none;
-    border-radius: 24px 24px 0 0;
-    padding: 16px 16px 24px;
-    display: none;
-    flex-direction: column;
-    gap: 8px;
-    z-index: 3000;
-    box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
-    transform: translateY(100%);
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-.post-options-menu.show { 
-    display: flex; 
-    transform: translateY(0);
-}
-.post-option-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 16px;
-    border-radius: 12px;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-primary);
-    cursor: pointer;
-    background: rgba(255,255,255,0.05);
-    transition: background 0.2s;
-}
+.post-options-menu { position: fixed; bottom: 0; left: 0; right: 0; background: var(--glass-bg); backdrop-filter: blur(25px) saturate(200%); -webkit-backdrop-filter: blur(25px) saturate(200%); border: 1px solid var(--glass-border); border-bottom: none; border-radius: 24px 24px 0 0; padding: 16px 16px 24px; display: none; flex-direction: column; gap: 8px; z-index: 3000; box-shadow: 0 -10px 40px rgba(0,0,0,0.5); transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.post-options-menu.show { display: flex; transform: translateY(0); }
+.post-option-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 12px; font-size: 16px; font-weight: 600; color: var(--text-primary); cursor: pointer; background: rgba(255,255,255,0.05); transition: background 0.2s; }
 .post-option-item:hover { background: rgba(255,255,255,0.1); }
 .post-option-item svg { width: 20px; height: 20px; }
 .post-option-item.danger { color: #f91880; }
 .post-option-item.danger:hover { background: rgba(249, 24, 128, 0.1); }
-.post-option-cancel {
-    margin-top: 8px;
-    justify-content: center;
-    background: transparent;
-    border: 1px solid var(--border-color);
-    color: var(--text-secondary);
-}
+.post-option-cancel { margin-top: 8px; justify-content: center; background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); }
 .post-option-cancel:hover { background: rgba(255,255,255,0.05); color: var(--text-primary); }
 
-/* دایرکت (لیست پیام‌ها) */
-.dm-item {
-    display: flex;
-    gap: 12px;
-    padding: 16px;
-    border-bottom: 1px solid var(--border-color);
-    cursor: pointer;
-}
+.dm-item { display: flex; gap: 12px; padding: 16px; border-bottom: 1px solid var(--border-color); cursor: pointer; }
 .dm-item:hover { background: rgba(255,255,255,0.03); }
 .dm-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); }
 .dm-content { flex: 1; }
@@ -438,110 +287,28 @@ svg { width: 24px; height: 24px; }
 .dm-time { font-size: 12px; color: var(--text-secondary); }
 .dm-text { font-size: 14px; color: var(--text-secondary); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
-/* صفحه چت اختصاصی */
-.chat-container {
-    display: flex;
-    flex-direction: column;
-    padding: 16px;
-    gap: 12px;
-    flex: 1;
-    overflow-y: auto;
-    padding-bottom: 80px;
-}
-.chat-bubble {
-    max-width: 85%;
-    padding: 12px 16px;
-    border-radius: 18px;
-    font-size: 15px;
-    line-height: 1.6;
-    position: relative;
-    word-wrap: break-word;
-}
-.chat-bubble.received {
-    background: rgba(255,255,255,0.08);
-    align-self: flex-start;
-    border-bottom-right-radius: 4px;
-}
-.chat-bubble.sent {
-    background: var(--accent-color);
-    color: white;
-    align-self: flex-end;
-    border-bottom-left-radius: 4px;
-}
-.chat-bubble img {
-    max-width: 100%;
-    border-radius: 10px;
-    margin-top: 8px;
-}
-.chat-time {
-    font-size: 11px;
-    margin-top: 6px;
-    opacity: 0.7;
-    text-align: left;
-}
+.chat-container { display: flex; flex-direction: column; padding: 16px; gap: 12px; flex: 1; overflow-y: auto; padding-bottom: 80px; }
+.chat-bubble { max-width: 85%; padding: 12px 16px; border-radius: 18px; font-size: 15px; line-height: 1.6; position: relative; word-wrap: break-word; }
+.chat-bubble.received { background: rgba(255,255,255,0.08); align-self: flex-start; border-bottom-right-radius: 4px; }
+.chat-bubble.sent { background: var(--accent-color); color: white; align-self: flex-end; border-bottom-left-radius: 4px; }
+.chat-bubble img { max-width: 100%; border-radius: 10px; margin-top: 8px; }
+.chat-time { font-size: 11px; margin-top: 6px; opacity: 0.7; text-align: left; }
 
-/* باکس تایپ چت (شناور مثل منوی پایین) */
-.chat-input-area {
-    position: fixed;
-    bottom: 12px; /* دقیقاً 12 پیکسل */
-    left: 14px; right: 14px;
-    background: var(--glass-bg);
-    backdrop-filter: blur(24px) saturate(200%); -webkit-backdrop-filter: blur(24px) saturate(200%);
-    border: 1px solid var(--glass-border); border-top-color: rgba(255,255,255,0.2);
-    border-radius: 999px; /* کپسولی */
-    padding: 8px 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    z-index: 1000;
-    box-shadow: 0 8px 32px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.14);
-}
-.chat-input-area input[type="text"] {
-    flex: 1;
-    background: transparent;
-    border: none;
-    border-radius: 20px;
-    padding: 10px 16px;
-    color: white;
-    font-family: inherit;
-    outline: none;
-    font-size: 15px;
-}
+.chat-input-area { position: fixed; bottom: 12px; left: 14px; right: 14px; background: var(--glass-bg); backdrop-filter: blur(24px) saturate(200%); -webkit-backdrop-filter: blur(24px) saturate(200%); border: 1px solid var(--glass-border); border-top-color: rgba(255,255,255,0.2); border-radius: 999px; padding: 8px 12px; display: flex; align-items: center; gap: 8px; z-index: 1000; box-shadow: 0 8px 32px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.14); }
+.chat-input-area input[type="text"] { flex: 1; background: transparent; border: none; border-radius: 20px; padding: 10px 16px; color: white; font-family: inherit; outline: none; font-size: 15px; }
 .chat-input-area .icon-btn { background: transparent; color: var(--text-secondary); border-radius: 50%; width: 40px; height: 40px; flex-shrink: 0; }
 .chat-input-area .icon-btn:hover { background: rgba(255,255,255,0.1); }
 .chat-input-area .icon-btn#btn-send-chat { background: var(--accent-color); color: white; }
 
-/* استایل کاربران در مودال پیام جدید */
-.new-chat-user {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 12px;
-    cursor: pointer;
-    transition: background 0.2s;
-}
+.new-chat-user { display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 12px; cursor: pointer; transition: background 0.2s; }
 .new-chat-user:hover { background: rgba(255,255,255,0.1); }
 .new-chat-user img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
 .new-chat-user-info { display: flex; flex-direction: column; }
 .new-chat-user-name { font-weight: 700; font-size: 14px; color: var(--text-primary); }
 .new-chat-user-handle { font-size: 12px; color: var(--text-secondary); }
 
-/* مودال بروزرسانی */
 #update-modal { align-items: flex-end; padding: 0; }
-.update-modal-content {
-    background: var(--glass-bg);
-    backdrop-filter: blur(30px) saturate(200%); -webkit-backdrop-filter: blur(30px) saturate(200%);
-    border: 1px solid var(--glass-border); border-bottom: none;
-    border-radius: 24px 24px 0 0;
-    box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
-    padding: 24px 24px 32px;
-    text-align: center;
-    transform: translateY(100%);
-    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    max-width: 100%;
-}
+.update-modal-content { background: var(--glass-bg); backdrop-filter: blur(30px) saturate(200%); -webkit-backdrop-filter: blur(30px) saturate(200%); border: 1px solid var(--glass-border); border-bottom: none; border-radius: 24px 24px 0 0; box-shadow: 0 -10px 40px rgba(0,0,0,0.5); padding: 24px 24px 32px; text-align: center; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); max-width: 100%; }
 #update-modal.show .update-modal-content { transform: translateY(0); }
 .bottom-sheet-handle { width: 40px; height: 5px; background: rgba(255, 255, 255, 0.2); border-radius: 10px; margin: 0 auto 20px auto; }
 .update-icon { font-size: 50px; margin-bottom: 12px; }
