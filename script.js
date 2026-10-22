@@ -1,7 +1,7 @@
 // ========================
 // تنظیمات نسخه و بروزرسانی
 // ========================
-const APP_VERSION = '1.2.1'; 
+const APP_VERSION = '1.2.2'; 
 const CURRENT_VER_KEY = 'viraasti_app_version';
 
 function checkForUpdate() {
@@ -126,6 +126,7 @@ let currentReactionPostId = null;
 let isPollMode = false;
 let editingPostId = null; 
 let currentWarnPostId = null; 
+let activeChatUser = null; 
 
 // ========================
 // سیستم Load و Save
@@ -300,25 +301,74 @@ function renderProfileFeed() {
 function renderMessages() {
     const container = document.getElementById('messages-list');
     if (!container) return;
+    
     const myMessages = state.directMessages.filter(m => m.recipient === state.user.handle);
+    const unreadCount = myMessages.filter(m => !m.read).length;
+    const badge = document.getElementById('dm-badge');
+    
+    if (unreadCount > 0) {
+        badge.textContent = unreadCount.toLocaleString('fa-IR');
+        badge.style.display = 'block';
+    } else {
+        badge.style.display = 'none';
+    }
 
     if (myMessages.length === 0) {
         container.innerHTML = `<div class="empty-state"><h3>هیچ پیامی ندارید</h3></div>`;
         return;
     }
 
-    container.innerHTML = myMessages.map(m => `
-        <div class="dm-item">
-            <img src="${m.senderAvatar}" class="dm-avatar">
-            <div class="dm-content">
-                <div class="dm-header">
-                    <span class="dm-name">${m.senderName} ${m.isVerified ? `<img src="blue-tick.png" class="verified-icon" style="width:16px;height:16px;">` : ''}</span>
-                    <span class="dm-time">${formatTimeAgo(m.ts)}</span>
+    // Group by sender (simple approach since only support sends here)
+    const senders = [...new Set(myMessages.map(m => m.sender))];
+    
+    container.innerHTML = senders.map(sender => {
+        const msgs = myMessages.filter(m => m.sender === sender);
+        const lastMsg = msgs[0]; // Assuming newest is at top
+        const hasUnread = msgs.some(m => !m.read);
+        return `
+            <div class="dm-item" onclick="openChat('${sender}')">
+                <img src="${lastMsg.senderAvatar}" class="dm-avatar">
+                <div class="dm-content">
+                    <div class="dm-header">
+                        <span class="dm-name">${lastMsg.senderName} ${lastMsg.isVerified ? `<img src="blue-tick.png" class="verified-icon" style="width:16px;height:16px;">` : ''}</span>
+                        <span class="dm-time">${formatTimeAgo(lastMsg.ts)}</span>
+                    </div>
+                    <div class="dm-text">${parseEmojis(lastMsg.text)}</div>
                 </div>
-                <div class="dm-text">${parseEmojis(m.text)}</div>
+                ${hasUnread ? `<span class="nav-badge" style="position:relative; top:0; right:0; align-self:center;">${msgs.filter(m=>!m.read).length.toLocaleString('fa-IR')}</span>` : ''}
             </div>
+        `;
+    }).join('');
+}
+
+// ========================
+// صفحه چت
+// ========================
+function openChat(senderHandle) {
+    activeChatUser = senderHandle;
+    const myMessages = state.directMessages.filter(m => m.recipient === state.user.handle && m.sender === senderHandle);
+    
+    // Mark as read
+    let changed = false;
+    myMessages.forEach(m => { if (!m.read) { m.read = true; changed = true; } });
+    if (changed) { save(); renderMessages(); }
+
+    const chatContainer = document.getElementById('chat-messages');
+    chatContainer.innerHTML = myMessages.sort((a,b) => a.ts - b.ts).map(m => `
+        <div class="chat-bubble received">
+            ${parseEmojis(m.text)}
+            <div class="chat-time">${formatTimeAgo(m.ts)}</div>
         </div>
     `).join('');
+
+    const senderMsg = myMessages[0];
+    if (senderMsg) {
+        document.getElementById('chat-header-name').textContent = senderMsg.senderName;
+        document.getElementById('chat-header-avatar').src = senderMsg.senderAvatar;
+    }
+
+    switchView('chat');
+    setTimeout(() => { chatContainer.scrollTop = chatContainer.scrollHeight; }, 100);
 }
 
 // ========================
@@ -335,16 +385,15 @@ function openPostOptions(e, id) {
     let menuHTML = '';
     if (isMine) {
         menuHTML += `<div class="post-option-item" onclick="editPost('${post.id}')"><svg><use href="#i-pen"/></svg> ویرایش ویراست</div>`;
+        menuHTML += `<div class="post-option-item danger" onclick="deletePost('${post.id}')"><svg><use href="#i-trash"/></svg> حذف ویراست</div>`;
     } else {
         if (!post.isVerified) menuHTML += `<div class="post-option-item" onclick="giveBlueTick('${post.id}')"><svg><use href="#i-check"/></svg> دادن تیک آبی</div>`;
-        menuHTML += `<div class="post-option-item" onclick="deletePost('${post.id}')"><svg><use href="#i-trash"/></svg> حذف ویراست</div>`;
+        menuHTML += `<div class="post-option-item danger" onclick="deletePost('${post.id}')"><svg><use href="#i-trash"/></svg> حذف ویراست</div>`;
         menuHTML += `<div class="post-option-item" onclick="openWarnModal('${post.id}')"><svg><use href="#i-alert"/></svg> اخطار به ارسال کننده</div>`;
         menuHTML += `<div class="post-option-item danger" onclick="banUser('${post.id}')"><svg><use href="#i-ban"/></svg> بن اکانت</div>`;
     }
 
-    // اضافه کردن دکمه انصراف برای بستن منو
     menuHTML += `<div class="post-option-item post-option-cancel" onclick="closePostOptions()">انصراف</div>`;
-
     menu.innerHTML = menuHTML;
     menu.classList.add('show');
 }
@@ -353,7 +402,6 @@ function closePostOptions() {
     document.getElementById('post-options-menu').classList.remove('show');
 }
 
-// بستن منو با کلیک بیرون از آن
 document.addEventListener('click', (e) => {
     if (!e.target.closest('.post-more-btn') && !e.target.closest('.post-options-menu')) {
         closePostOptions();
@@ -378,14 +426,11 @@ function giveBlueTick(id) {
     closePostOptions();
     const post = [...state.posts, ...state.aiPosts].find(p => p.id == id);
     if (!post) return;
-    
     state.posts.forEach(p => { if (p.handle === post.handle) p.isVerified = true; });
     state.aiPosts.forEach(p => { if (p.handle === post.handle) p.isVerified = true; });
-    
     if (state.user.handle === post.handle) state.user.isVerified = true;
     const acc = state.accounts.find(a => a.handle === post.handle);
     if (acc) acc.isVerified = true;
-    
     save(); renderFeeds(); renderProfile();
 }
 
@@ -409,6 +454,9 @@ document.getElementById('btn-submit-warn').addEventListener('click', () => {
     
     const post = [...state.posts, ...state.aiPosts].find(p => p.id == currentWarnPostId);
     if (post) {
+        const preview = post.text.length > 30 ? post.text.substring(0, 30) + '...' : post.text;
+        const msgText = `کاربر محترم ${post.author}\n\nویراست شما:\n"${preview}"\n\nبه دلیل "${reason}" اخطار دریافت کرد. در رعایت قوانین کوشا باشید.`;
+
         const newDM = {
             id: Date.now().toString(),
             sender: '@support',
@@ -416,8 +464,9 @@ document.getElementById('btn-submit-warn').addEventListener('click', () => {
             senderAvatar: 'Logo.png', 
             isVerified: true,
             recipient: post.handle,
-            text: `ویراست شما به دلیل "${reason}" اخطار دریافت کرد. لطفا قوانین را رعایت کنید.`,
-            ts: Date.now()
+            text: msgText,
+            ts: Date.now(),
+            read: false
         };
         state.directMessages.unshift(newDM);
         save();
@@ -435,11 +484,9 @@ function banUser(id) {
     
     if (confirm(`آیا از بن کردن اکانت ${post.handle} مطمئن هستید؟`)) {
         if (!state.bannedUsers.includes(post.handle)) state.bannedUsers.push(post.handle);
-        
         state.posts = state.posts.filter(p => p.handle !== post.handle);
         state.aiPosts = state.aiPosts.filter(p => p.handle !== post.handle);
         state.accounts = state.accounts.filter(a => a.handle !== post.handle);
-        
         save(); renderFeeds();
         alert('اکانت بن شد و آی‌دی آن دیگر قابل استفاده نیست.');
     }
