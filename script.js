@@ -1,7 +1,7 @@
 // ========================
 // تنظیمات نسخه و بروزرسانی
 // ========================
-const APP_VERSION = '1.2.2'; 
+const APP_VERSION = '1.4.2'; 
 const CURRENT_VER_KEY = 'viraasti_app_version';
 
 function checkForUpdate() {
@@ -16,9 +16,7 @@ function checkForUpdate() {
 document.getElementById('btn-do-update').addEventListener('click', async () => {
     const modal = document.getElementById('update-modal');
     modal.classList.remove('show'); 
-    
     localStorage.setItem(CURRENT_VER_KEY, APP_VERSION);
-    
     setTimeout(async () => {
         if ('caches' in window) {
             const cacheNames = await caches.keys();
@@ -46,7 +44,7 @@ const DEFAULT_AVATAR = 'https://ui-avatars.com/api/?name=User&background=1d9bf0&
 const DEFAULT_HEADER = 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1500&h=500&fit=crop';
 
 // ========================
-// سیستم هوشمند تبدیل تمام ایموجی‌ها به ویندوز ۱۱
+// سیستم هوشمند تبدیل ایموجی‌ها و منشن‌ها
 // ========================
 let emojiData = null;
 const emojiMap = {
@@ -104,6 +102,13 @@ function getEmojiImg(emoji, size = '18px') {
     const name = emojiMap[emoji];
     if (!name) return `<span>${emoji}</span>`; 
     return `<img src="https://api.iconify.design/fluent-emoji/${name}.svg" style="width: ${size}; height: ${size}; object-fit: contain; vertical-align: middle;" alt="${emoji}">`;
+}
+
+function parseAll(text) {
+    if (!text) return '';
+    let parsed = parseEmojis(text);
+    parsed = parsed.replace(/(^|\s)(@[a-zA-Z0-9_آ-ی]+)/g, '$1<span class="mention" onclick="event.stopPropagation(); openUserProfile(\'$2\')">$2</span>');
+    return parsed;
 }
 
 let state = {
@@ -177,14 +182,31 @@ if (state.aiPosts.length === 0) {
             isVerified: true, ts: now - (2 * 60 * 60 * 1000),
             text: 'هوش مصنوعی گوگل (Gemini) به‌روزرسانی جدیدی دریافت کرد. 🤖🎥',
             image: null, stats: generateStats(50000), myReaction: null, liked: false, retweeted: false, bookmarked: false
+        },
+        {
+            id: 'ai2', author: 'ورزش۳', handle: '@Varzesh3', avatar: 'https://ui-avatars.com/api/?name=ورزش&background=dc2626&color=fff',
+            isVerified: true, ts: now - (4 * 60 * 60 * 1000),
+            text: 'رئال مادرید در یک بازی نفس‌گیر موفق شد بارسلونا را شکست دهد و قهرمان شود! ⚽🏆🔥',
+            image: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800&fit=crop',
+            stats: generateStats(120000), myReaction: null, liked: false, retweeted: false, bookmarked: false
+        },
+        {
+            id: 'ai3', author: 'تکنولوژی روز', handle: '@TechNews', avatar: 'https://ui-avatars.com/api/?name=Tech&background=3b82f6&color=fff',
+            isVerified: true, ts: now - (6 * 60 * 60 * 1000),
+            text: 'اپل از تراشه جدید M4 رونمایی کرد. این تراشه ۵۰ درصد سریع‌تر از نسل قبل است و در آیپد پرو جدید استفاده خواهد شد. 💻📱',
+            image: null, stats: generateStats(85000), myReaction: null, liked: false, retweeted: false, bookmarked: false
+        },
+        {
+            id: 'ai4', author: 'میم و سرگرمی', handle: '@Memes', avatar: 'https://ui-avatars.com/api/?name=Meme&background=f59e0b&color=fff',
+            isVerified: false, ts: now - (8 * 60 * 60 * 1000),
+            text: 'وقتی میفهمی فردا امتحان داری و هنوز هیچی نخوندی: 😂💀',
+            image: 'https://images.unsplash.com/photo-1543852786-1cf6624b9987?w=800&fit=crop',
+            stats: generateStats(250000), myReaction: null, liked: false, retweeted: false, bookmarked: false
         }
     ];
     save();
 }
 
-// ========================
-// فرمت‌کننده زمان
-// ========================
 function formatTimeAgo(ts) {
     if (!ts) return 'همین حالا';
     const diff = Date.now() - ts;
@@ -198,9 +220,6 @@ function formatTimeAgo(ts) {
     return `${day.toLocaleString('fa-IR')} روز پیش`;
 }
 
-// ========================
-// توابع رندر
-// ========================
 const iconReaction = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>`;
 
 function createPostHTML(post) {
@@ -222,28 +241,28 @@ function createPostHTML(post) {
     if (post.poll) {
         const totalVotes = post.poll.options.reduce((sum, opt) => sum + opt.votes, 0);
         const hasVoted = post.poll.votedIndex !== null;
-        pollHTML = `<div class="poll-container" onclick="event.stopPropagation();"><div class="poll-question">${parseEmojis(post.poll.question)}</div>`;
+        pollHTML = `<div class="poll-container" onclick="event.stopPropagation();"><div class="poll-question">${parseAll(post.poll.question)}</div>`;
         post.poll.options.forEach((opt, index) => {
             const percent = totalVotes === 0 ? 0 : Math.round((opt.votes / totalVotes) * 100);
             const isSelected = post.poll.votedIndex === index;
-            pollHTML += `<div class="poll-option ${isSelected ? 'selected' : ''}" onclick="votePoll(event, '${post.id}', ${index})"><div class="poll-progress" style="width: ${hasVoted ? percent : 0}%"></div><div class="poll-option-content"><span class="poll-option-text">${parseEmojis(opt.text)} ${isSelected ? '✓' : ''}</span>${hasVoted ? `<span class="poll-option-percent">${percent.toLocaleString('fa-IR')}%</span>` : ''}</div></div>`;
+            pollHTML += `<div class="poll-option ${isSelected ? 'selected' : ''}" onclick="votePoll(event, '${post.id}', ${index})"><div class="poll-progress" style="width: ${hasVoted ? percent : 0}%"></div><div class="poll-option-content"><span class="poll-option-text">${parseAll(opt.text)} ${isSelected ? '✓' : ''}</span>${hasVoted ? `<span class="poll-option-percent">${percent.toLocaleString('fa-IR')}%</span>` : ''}</div></div>`;
         });
         pollHTML += `<div class="poll-footer">${totalVotes.toLocaleString('fa-IR')} رأی ${hasVoted ? '· شما رأی داده‌اید' : ''}</div></div>`;
     }
 
     return `
         <div class="post" onclick="openPostDetail(event, '${post.id}')">
-            <div class="post-avatar"><img src="${post.avatar}" alt="Avatar"></div>
+            <div class="post-avatar" onclick="event.stopPropagation(); openUserProfile('${post.handle}')"><img src="${post.avatar}" alt="Avatar"></div>
             <div class="post-content">
                 <div class="post-header">
                     <div style="display:flex; align-items:center; gap:6px; flex:1; overflow:hidden;">
-                        <span class="post-name" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${parseEmojis(post.author)} ${verifiedIcon}</span>
-                        <span class="post-handle" style="white-space:nowrap;">${post.handle}</span>
+                        <span class="post-name" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer;" onclick="event.stopPropagation(); openUserProfile('${post.handle}')">${parseAll(post.author)} ${verifiedIcon}</span>
+                        <span class="post-handle" style="white-space:nowrap; cursor:pointer;" onclick="event.stopPropagation(); openUserProfile('${post.handle}')">${post.handle}</span>
                         <span class="post-time" style="white-space:nowrap;">· ${timeStr}</span>
                     </div>
                     <button type="button" class="post-more-btn" onclick="openPostOptions(event, '${post.id}')"><svg><use href="#i-more"/></svg></button>
                 </div>
-                <div class="post-text">${parseEmojis(post.text)}</div>
+                <div class="post-text">${parseAll(post.text)}</div>
                 ${post.image ? `<img src="${post.image}" class="post-img" alt="Post Image">` : ''}
                 ${pollHTML}
                 ${reactionsHTML}
@@ -298,6 +317,109 @@ function renderProfileFeed() {
     }
 }
 
+function getUserInfo(handle) {
+    if (handle === state.user.handle) return state.user;
+    const acc = state.accounts.find(a => a.handle === handle);
+    if (acc) return acc;
+    
+    const post = [...state.posts, ...state.aiPosts].find(p => p.handle === handle);
+    if (post) {
+        return { 
+            name: post.author, 
+            handle: post.handle, 
+            avatar: post.avatar, 
+            header: DEFAULT_HEADER, 
+            bio: 'به Virasty خوش آمدید!', 
+            followers: Math.floor(Math.random() * 1000),
+            following: Math.floor(Math.random() * 500),
+            isVerified: post.isVerified 
+        };
+    }
+    
+    return { 
+        name: handle.replace('@', ''), 
+        handle: handle, 
+        avatar: DEFAULT_AVATAR, 
+        header: DEFAULT_HEADER, 
+        bio: 'کاربر Virasty', 
+        followers: 0, 
+        following: 0, 
+        isVerified: false 
+    };
+}
+
+function openUserProfile(rawHandle) {
+    if (!rawHandle) return;
+    let handle = '@' + rawHandle.replace(/@/g, '').trim();
+
+    if (handle === state.user.handle) {
+        switchView('profile');
+        return;
+    }
+    
+    const content = document.getElementById('user-profile-content');
+    
+    if (state.bannedUsers.includes(handle)) {
+        content.innerHTML = `
+            <div class="empty-state" style="margin-top: 80px; padding: 40px 20px;">
+                <svg style="width:80px; height:80px; color: #f91880; opacity: 1; margin-bottom: 20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                <h3 style="color:#f91880; font-size: 24px;">Banned Account</h3>
+                <p style="margin-top: 12px; font-weight: bold; font-size: 16px;">این اکانت به دلیل تخلفات محرز تعلیق می باشد</p>
+            </div>
+        `;
+        switchView('user-profile');
+        return;
+    }
+
+    const existsInAccounts = (state.accounts || []).some(a => a.handle === handle);
+    const existsInPosts = [...state.posts, ...state.aiPosts].some(p => p.handle === handle);
+    
+    if (!existsInAccounts && !existsInPosts) {
+        content.innerHTML = `
+            <div class="empty-state" style="margin-top: 80px; padding: 40px 20px;">
+                <svg style="width:80px; height:80px; color: var(--text-secondary); opacity: 1; margin-bottom: 20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <h3 style="color:var(--text-secondary); font-size: 24px;">کاربری یافت نشد</h3>
+                <p style="margin-top: 12px; font-weight: bold; font-size: 16px;">این آیدی در ویراستی وجود ندارد</p>
+            </div>
+        `;
+        switchView('user-profile');
+        return;
+    }
+
+    const u = getUserInfo(handle);
+    const userPosts = [...state.posts, ...state.aiPosts].filter(p => p.handle === handle);
+    
+    content.innerHTML = `
+        <div class="profile-section">
+            <div class="cover-photo" style="background-image: url('${u.header || DEFAULT_HEADER}');">
+                <button type="button" class="icon-btn back-btn" onclick="goBack()"><svg><use href="#i-back"/></svg></button>
+            </div>
+            <div class="profile-actions-row">
+                <div class="profile-avatar">
+                    <img src="${u.avatar}" alt="Avatar">
+                </div>
+            </div>
+            <div class="profile-info">
+                <h1 class="profile-name">${parseAll(u.name)} ${u.isVerified ? `<img src="blue-tick.png" class="verified-icon lg">` : ''}</h1>
+                <span class="profile-handle">${u.handle}</span>
+                <p class="profile-bio">${parseAll(u.bio || 'کاربر ویراستی')}</p>
+                <div class="profile-stats">
+                    <span><b>${(u.following || 0).toLocaleString('fa-IR')}</b> دنبال‌شده</span>
+                    <span><b>${(u.followers || 0).toLocaleString('fa-IR')}</b> دنبال‌کننده</span>
+                </div>
+            </div>
+        </div>
+        <div class="profile-tabs">
+            <button type="button" class="ptab active">ویراست‌ها</button>
+        </div>
+        <div id="other-profile-feed" style="display: flex; flex-direction: column;">
+            ${userPosts.length > 0 ? userPosts.map(p => createPostHTML(p)).join('') : '<div class="empty-state"><h3>محتوایی یافت نشد</h3></div>'}
+        </div>
+    `;
+    
+    switchView('user-profile');
+}
+
 function renderMessages() {
     const container = document.getElementById('messages-list');
     if (!container) return;
@@ -318,22 +440,23 @@ function renderMessages() {
         return;
     }
 
-    // Group by sender (simple approach since only support sends here)
     const senders = [...new Set(myMessages.map(m => m.sender))];
     
     container.innerHTML = senders.map(sender => {
         const msgs = myMessages.filter(m => m.sender === sender);
-        const lastMsg = msgs[0]; // Assuming newest is at top
+        const lastMsg = msgs[0];
         const hasUnread = msgs.some(m => !m.read);
+        const uInfo = getUserInfo(sender);
+        
         return `
-            <div class="dm-item" onclick="openChat('${sender}')">
-                <img src="${lastMsg.senderAvatar}" class="dm-avatar">
-                <div class="dm-content">
+            <div class="dm-item">
+                <img src="${lastMsg.senderAvatar || uInfo.avatar}" class="dm-avatar" onclick="event.stopPropagation(); openUserProfile('${sender}')" style="object-fit: ${sender === '@support' ? 'contain' : 'cover'}; background: ${sender === '@support' ? 'white' : 'transparent'};">
+                <div class="dm-content" onclick="openChat('${sender}')">
                     <div class="dm-header">
-                        <span class="dm-name">${lastMsg.senderName} ${lastMsg.isVerified ? `<img src="blue-tick.png" class="verified-icon" style="width:16px;height:16px;">` : ''}</span>
+                        <span class="dm-name" onclick="event.stopPropagation(); openUserProfile('${sender}')">${lastMsg.senderName || uInfo.name} ${lastMsg.isVerified ? `<img src="blue-tick.png" class="verified-icon">` : ''}</span>
                         <span class="dm-time">${formatTimeAgo(lastMsg.ts)}</span>
                     </div>
-                    <div class="dm-text">${parseEmojis(lastMsg.text)}</div>
+                    <div class="dm-text">${parseAll(lastMsg.text)}</div>
                 </div>
                 ${hasUnread ? `<span class="nav-badge" style="position:relative; top:0; right:0; align-self:center;">${msgs.filter(m=>!m.read).length.toLocaleString('fa-IR')}</span>` : ''}
             </div>
@@ -342,38 +465,99 @@ function renderMessages() {
 }
 
 // ========================
-// صفحه چت
+// صفحه چت (با نمایش آیدی و تیک آبی)
 // ========================
 function openChat(senderHandle) {
     activeChatUser = senderHandle;
-    const myMessages = state.directMessages.filter(m => m.recipient === state.user.handle && m.sender === senderHandle);
+    const myMessages = state.directMessages.filter(m => (m.recipient === state.user.handle && m.sender === senderHandle) || (m.sender === state.user.handle && m.recipient === senderHandle));
     
-    // Mark as read
     let changed = false;
-    myMessages.forEach(m => { if (!m.read) { m.read = true; changed = true; } });
+    myMessages.forEach(m => { if (m.recipient === state.user.handle && !m.read) { m.read = true; changed = true; } });
     if (changed) { save(); renderMessages(); }
 
+    const uInfo = getUserInfo(senderHandle);
     const chatContainer = document.getElementById('chat-messages');
-    chatContainer.innerHTML = myMessages.sort((a,b) => a.ts - b.ts).map(m => `
-        <div class="chat-bubble received">
-            ${parseEmojis(m.text)}
-            <div class="chat-time">${formatTimeAgo(m.ts)}</div>
-        </div>
-    `).join('');
-
-    const senderMsg = myMessages[0];
-    if (senderMsg) {
-        document.getElementById('chat-header-name').textContent = senderMsg.senderName;
-        document.getElementById('chat-header-avatar').src = senderMsg.senderAvatar;
+    
+    if (myMessages.length === 0) {
+        chatContainer.innerHTML = `<div class="empty-state"><h3>شروع گفتگو با ${uInfo.name}</h3></div>`;
+    } else {
+        chatContainer.innerHTML = myMessages.sort((a,b) => a.ts - b.ts).map(m => {
+            const isMe = m.sender === state.user.handle;
+            return `
+                <div class="chat-bubble ${isMe ? 'sent' : 'received'}">
+                    ${parseAll(m.text)}
+                    ${m.image ? `<img src="${m.image}" alt="Image">` : ''}
+                    <div class="chat-time">${formatTimeAgo(m.ts)}</div>
+                </div>
+            `;
+        }).join('');
     }
+
+    // به‌روزرسانی هدر چت با آیدی و تیک آبی
+    document.getElementById('chat-header-name').textContent = uInfo.name;
+    document.getElementById('chat-header-handle').textContent = uInfo.handle;
+    
+    const tickEl = document.getElementById('chat-header-tick');
+    if (uInfo.isVerified || senderHandle === '@support') {
+        tickEl.style.display = 'inline-block';
+    } else {
+        tickEl.style.display = 'none';
+    }
+
+    const avatarEl = document.getElementById('chat-header-avatar');
+    avatarEl.src = uInfo.avatar;
+    avatarEl.style.objectFit = senderHandle === '@support' ? 'contain' : 'cover';
+    avatarEl.style.background = senderHandle === '@support' ? 'white' : 'transparent';
 
     switchView('chat');
     setTimeout(() => { chatContainer.scrollTop = chatContainer.scrollHeight; }, 100);
 }
 
-// ========================
-// منوی سه نقطه (Bottom Sheet)
-// ========================
+document.getElementById('btn-send-chat').addEventListener('click', () => {
+    const input = document.getElementById('chat-input');
+    const text = input.value.trim();
+    if (!text || !activeChatUser) return;
+    
+    const newMsg = {
+        id: Date.now().toString(),
+        sender: state.user.handle,
+        senderName: state.user.name,
+        senderAvatar: state.user.avatar,
+        isVerified: state.user.isVerified,
+        recipient: activeChatUser,
+        text: text,
+        ts: Date.now(),
+        read: true
+    };
+    state.directMessages.push(newMsg);
+    save();
+    input.value = '';
+    openChat(activeChatUser);
+});
+
+document.getElementById('chat-upload-image').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file && activeChatUser) {
+        compressImage(file, 800, 800, (base64) => {
+            const newMsg = {
+                id: Date.now().toString(),
+                sender: state.user.handle,
+                senderName: state.user.name,
+                senderAvatar: state.user.avatar,
+                isVerified: state.user.isVerified,
+                recipient: activeChatUser,
+                text: '📷 عکس ارسال شد',
+                image: base64,
+                ts: Date.now(),
+                read: true
+            };
+            state.directMessages.push(newMsg);
+            save();
+            openChat(activeChatUser);
+        });
+    }
+});
+
 function openPostOptions(e, id) {
     e.stopPropagation();
     const post = [...state.posts, ...state.aiPosts].find(p => p.id == id);
@@ -386,10 +570,21 @@ function openPostOptions(e, id) {
     if (isMine) {
         menuHTML += `<div class="post-option-item" onclick="editPost('${post.id}')"><svg><use href="#i-pen"/></svg> ویرایش ویراست</div>`;
         menuHTML += `<div class="post-option-item danger" onclick="deletePost('${post.id}')"><svg><use href="#i-trash"/></svg> حذف ویراست</div>`;
+        
+        if (!post.isWarnSender) {
+            menuHTML += `<div class="post-option-item" onclick="setWarnSender('${post.id}')"><svg><use href="#i-user"/></svg> تنظیم به عنوان اخطار دهنده</div>`;
+        } else {
+            menuHTML += `<div class="post-option-item" onclick="removeWarnSender('${post.id}')"><svg><use href="#i-close"/></svg> لغو اخطار دهنده</div>`;
+        }
     } else {
         if (!post.isVerified) menuHTML += `<div class="post-option-item" onclick="giveBlueTick('${post.id}')"><svg><use href="#i-check"/></svg> دادن تیک آبی</div>`;
         menuHTML += `<div class="post-option-item danger" onclick="deletePost('${post.id}')"><svg><use href="#i-trash"/></svg> حذف ویراست</div>`;
         menuHTML += `<div class="post-option-item" onclick="openWarnModal('${post.id}')"><svg><use href="#i-alert"/></svg> اخطار به ارسال کننده</div>`;
+        if (!post.isWarnSender) {
+            menuHTML += `<div class="post-option-item" onclick="setWarnSender('${post.id}')"><svg><use href="#i-user"/></svg> تنظیم به عنوان اخطار دهنده</div>`;
+        } else {
+            menuHTML += `<div class="post-option-item" onclick="removeWarnSender('${post.id}')"><svg><use href="#i-close"/></svg> لغو اخطار دهنده</div>`;
+        }
         menuHTML += `<div class="post-option-item danger" onclick="banUser('${post.id}')"><svg><use href="#i-ban"/></svg> بن اکانت</div>`;
     }
 
@@ -407,6 +602,26 @@ document.addEventListener('click', (e) => {
         closePostOptions();
     }
 });
+
+function setWarnSender(id) {
+    closePostOptions();
+    const post = state.posts.find(p => p.id === id) || state.aiPosts.find(p => p.id === id);
+    if (post) {
+        post.isWarnSender = true;
+        save();
+        alert('از این پس پیام‌های اخطار از طرف این پروفایل ارسال می‌شود.');
+    }
+}
+
+function removeWarnSender(id) {
+    closePostOptions();
+    const post = state.posts.find(p => p.id === id) || state.aiPosts.find(p => p.id === id);
+    if (post) {
+        post.isWarnSender = false;
+        save();
+        alert('اخطار دهنده به حالت پیش‌فرض (شما) بازگشت.');
+    }
+}
 
 function editPost(id) {
     closePostOptions();
@@ -455,14 +670,19 @@ document.getElementById('btn-submit-warn').addEventListener('click', () => {
     const post = [...state.posts, ...state.aiPosts].find(p => p.id == currentWarnPostId);
     if (post) {
         const preview = post.text.length > 30 ? post.text.substring(0, 30) + '...' : post.text;
+        
+        const senderInfo = post.isWarnSender ? 
+            { handle: post.handle, name: post.author, avatar: post.avatar, isVerified: post.isVerified } : 
+            { handle: state.user.handle, name: state.user.name, avatar: state.user.avatar, isVerified: state.user.isVerified };
+
         const msgText = `کاربر محترم ${post.author}\n\nویراست شما:\n"${preview}"\n\nبه دلیل "${reason}" اخطار دریافت کرد. در رعایت قوانین کوشا باشید.`;
 
         const newDM = {
             id: Date.now().toString(),
-            sender: '@support',
-            senderName: 'پشتیبانی ویراستی',
-            senderAvatar: 'Logo.png', 
-            isVerified: true,
+            sender: senderInfo.handle,
+            senderName: senderInfo.name,
+            senderAvatar: senderInfo.avatar, 
+            isVerified: senderInfo.isVerified,
             recipient: post.handle,
             text: msgText,
             ts: Date.now(),
@@ -492,9 +712,76 @@ function banUser(id) {
     }
 }
 
-// ========================
-// مدیریت اکانت‌ها
-// ========================
+function openNewChatModal() {
+    const container = document.getElementById('new-chat-list');
+    const searchInput = document.getElementById('new-chat-search');
+    searchInput.value = '';
+    
+    let usersHTML = '';
+    const followed = state.user.followedUsers || [];
+    
+    if (followed.length === 0) {
+        usersHTML = '<p style="color:var(--text-secondary); text-align:center; padding:10px;">شما هنوز کسی را دنبال نکرده‌اید.</p>';
+    } else {
+        followed.forEach(handle => {
+            const u = getUserInfo(handle);
+            usersHTML += `
+                <div class="new-chat-user" onclick="openChat('${handle}'); document.getElementById('new-chat-modal').classList.remove('show');">
+                    <img src="${u.avatar}">
+                    <div class="new-chat-user-info">
+                        <span class="new-chat-user-name">${u.name} ${u.isVerified ? `<img src="blue-tick.png" style="width:12px;height:12px;vertical-align:middle;">` : ''}</span>
+                        <span class="new-chat-user-handle">${u.handle}</span>
+                    </div>
+                </div>
+            `;
+        });
+    }
+    
+    container.innerHTML = usersHTML;
+    document.getElementById('new-chat-modal').classList.add('show');
+}
+
+document.getElementById('new-chat-search').addEventListener('input', (e) => {
+    const query = e.target.value.trim().toLowerCase();
+    const container = document.getElementById('new-chat-list');
+    
+    if (!query) {
+        openNewChatModal();
+        return;
+    }
+    
+    const allHandles = new Set([...state.posts.map(p => p.handle), ...state.accounts.map(a => a.handle), ...state.user.followedUsers]);
+    const results = [...allHandles].filter(h => h.toLowerCase().includes(query));
+    
+    let usersHTML = '';
+    if (results.length === 0) {
+        usersHTML = '<p style="color:var(--text-secondary); text-align:center; padding:10px;">کاربری یافت نشد. (می‌توانید آیدی را کامل تایپ کنید)</p>';
+    } else {
+        results.forEach(handle => {
+            const u = getUserInfo(handle);
+            usersHTML += `
+                <div class="new-chat-user" onclick="openChat('${handle}'); document.getElementById('new-chat-modal').classList.remove('show');">
+                    <img src="${u.avatar}">
+                    <div class="new-chat-user-info">
+                        <span class="new-chat-user-name">${u.name} ${u.isVerified ? `<img src="blue-tick.png" style="width:12px;height:12px;vertical-align:middle;">` : ''}</span>
+                        <span class="new-chat-user-handle">${u.handle}</span>
+                    </div>
+                </div>
+            `;
+        });
+    }
+    container.innerHTML = usersHTML;
+});
+
+function startNewChat() {
+    const query = document.getElementById('new-chat-search').value.trim().replace(/@/g, '');
+    if (!query) return;
+    
+    const handle = '@' + query;
+    document.getElementById('new-chat-modal').classList.remove('show');
+    openChat(handle);
+}
+
 function renderAccountList() {
     const container = document.getElementById('account-list');
     if (!container) return;
@@ -504,7 +791,7 @@ function renderAccountList() {
             <div class="account-info">
                 <img src="${u.avatar || DEFAULT_AVATAR}" class="account-avatar">
                 <div class="account-details">
-                    <span class="account-name">${parseEmojis(u.name)}</span>
+                    <span class="account-name">${parseAll(u.name)}</span>
                     <span class="account-handle">${u.handle}</span>
                 </div>
             </div>
@@ -525,9 +812,6 @@ function switchAccount(handle) {
     }
 }
 
-// ========================
-// اکشن‌های دیگر
-// ========================
 function votePoll(e, id, optionIndex) {
     e.stopPropagation();
     const post = [...state.posts, ...state.aiPosts].find(p => p.id == id);
@@ -605,9 +889,6 @@ function toggleAction(e, id, type) {
     save(); renderFeeds();
 }
 
-// ========================
-// ناوبری
-// ========================
 function switchHomeTab(tab) {
     currentHomeTab = tab;
     document.getElementById('tab-following').classList.toggle('active', tab === 'following');
@@ -626,13 +907,40 @@ function switchView(viewName) {
     
     const topTabs = document.getElementById('home-tabs-container');
     const header = document.getElementById('main-header');
+    const fab = document.getElementById('btn-compose');
+    const bottomNav = document.querySelector('.bottom-nav');
     
-    if (viewName !== 'home') {
+    if (viewName === 'chat') {
         if(header) header.style.display = 'none';
         if(topTabs) topTabs.style.display = 'none';
+        if(fab) fab.style.display = 'none';
+        if(bottomNav) bottomNav.style.display = 'none';
     } else {
-        if(header) header.style.display = 'flex';
-        if(topTabs) topTabs.style.display = 'flex';
+        if(bottomNav) bottomNav.style.display = 'flex';
+        
+        if (viewName !== 'home') {
+            if(header) header.style.display = 'none';
+            if(topTabs) topTabs.style.display = 'none';
+        } else {
+            if(header) header.style.display = 'flex';
+            if(topTabs) topTabs.style.display = 'flex';
+        }
+
+        if (viewName === 'messages') {
+            if(fab) {
+                fab.style.display = 'flex';
+                document.getElementById('fab-icon').setAttribute('href', '#i-mail');
+                document.getElementById('fab-text').textContent = 'پیام جدید';
+            }
+        } else if (viewName === 'profile' || viewName === 'settings' || viewName === 'post-detail' || viewName === 'user-profile') {
+            if(fab) fab.style.display = 'none'; 
+        } else {
+            if(fab) {
+                fab.style.display = 'flex';
+                document.getElementById('fab-icon').setAttribute('href', '#i-pen');
+                document.getElementById('fab-text').textContent = 'نوشتن';
+            }
+        }
     }
     
     if (viewName === 'profile') renderProfile();
@@ -645,20 +953,7 @@ function goBack() {
     if (currentViewStack.length > 1) {
         currentViewStack.pop();
         const prev = currentViewStack[currentViewStack.length - 1];
-        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-        const target = document.getElementById(`view-${prev}`);
-        if(target) { target.classList.add('active'); target.scrollTop = 0; }
-        
-        const topTabs = document.getElementById('home-tabs-container');
-        const header = document.getElementById('main-header');
-        
-        if (prev !== 'home') {
-            if(header) header.style.display = 'none';
-            if(topTabs) topTabs.style.display = 'none';
-        } else {
-            if(header) header.style.display = 'flex';
-            if(topTabs) topTabs.style.display = 'flex';
-        }
+        switchView(prev);
     }
 }
 
@@ -673,9 +968,9 @@ function renderProfile() {
     const verifiedIcon = u.isVerified ? `<img src="blue-tick.png" class="verified-icon lg" alt="verified">` : '';
     
     const nameEl = document.getElementById('profile-name');
-    if(nameEl) nameEl.innerHTML = `${parseEmojis(u.name)} ${verifiedIcon}`;
+    if(nameEl) nameEl.innerHTML = `${parseAll(u.name)} ${verifiedIcon}`;
     if(document.getElementById('profile-handle')) document.getElementById('profile-handle').textContent = u.handle;
-    if(document.getElementById('profile-bio')) document.getElementById('profile-bio').innerHTML = parseEmojis(u.bio);
+    if(document.getElementById('profile-bio')) document.getElementById('profile-bio').innerHTML = parseAll(u.bio);
     if(document.getElementById('profile-followers')) document.getElementById('profile-followers').textContent = (u.followers || 0).toLocaleString('fa-IR');
     if(document.getElementById('profile-following')) document.getElementById('profile-following').textContent = (u.following || 0).toLocaleString('fa-IR');
     if(document.getElementById('profile-joined-text')) document.getElementById('profile-joined-text').textContent = u.joinedDate || 'نامشخص';
@@ -685,7 +980,7 @@ function renderProfile() {
 }
 
 function openPostDetail(e, id) {
-    if (e.target.closest('button') || e.target.closest('.poll-option')) return;
+    if (e.target.closest('button') || e.target.closest('.poll-option') || e.target.closest('.post-avatar') || e.target.closest('.post-name') || e.target.closest('.post-handle') || e.target.closest('.mention')) return;
     activePostId = id;
     renderPostDetail(id);
     switchView('post-detail');
@@ -701,24 +996,24 @@ function renderPostDetail(id) {
     if (post.poll) {
         const totalVotes = post.poll.options.reduce((sum, opt) => sum + opt.votes, 0);
         const hasVoted = post.poll.votedIndex !== null;
-        pollHTML = `<div class="poll-container" style="margin-top: 16px;"><div class="poll-question">${parseEmojis(post.poll.question)}</div>`;
+        pollHTML = `<div class="poll-container" style="margin-top: 16px;"><div class="poll-question">${parseAll(post.poll.question)}</div>`;
         post.poll.options.forEach((opt, index) => {
             const percent = totalVotes === 0 ? 0 : Math.round((opt.votes / totalVotes) * 100);
             const isSelected = post.poll.votedIndex === index;
-            pollHTML += `<div class="poll-option ${isSelected ? 'selected' : ''}" onclick="votePoll(event, '${post.id}', ${index})"><div class="poll-progress" style="width: ${hasVoted ? percent : 0}%"></div><div class="poll-option-content"><span class="poll-option-text">${parseEmojis(opt.text)} ${isSelected ? '✓' : ''}</span>${hasVoted ? `<span class="poll-option-percent">${percent.toLocaleString('fa-IR')}%</span>` : ''}</div></div>`;
+            pollHTML += `<div class="poll-option ${isSelected ? 'selected' : ''}" onclick="votePoll(event, '${post.id}', ${index})"><div class="poll-progress" style="width: ${hasVoted ? percent : 0}%"></div><div class="poll-option-content"><span class="poll-option-text">${parseAll(opt.text)} ${isSelected ? '✓' : ''}</span>${hasVoted ? `<span class="poll-option-percent">${percent.toLocaleString('fa-IR')}%</span>` : ''}</div></div>`;
         });
         pollHTML += `<div class="poll-footer">${totalVotes.toLocaleString('fa-IR')} رأی ${hasVoted ? '· شما رأی داده‌اید' : ''}</div></div>`;
     }
 
     const detailHTML = `
         <div class="post" style="border-bottom:none;">
-            <div class="post-avatar"><img src="${post.avatar}"></div>
+            <div class="post-avatar" onclick="openUserProfile('${post.handle}')"><img src="${post.avatar}"></div>
             <div class="post-content">
                 <div class="post-header">
-                    <span class="post-name">${parseEmojis(post.author)} ${verifiedIcon}</span>
-                    <span class="post-handle">${post.handle}</span>
+                    <span class="post-name" style="cursor:pointer;" onclick="openUserProfile('${post.handle}')">${parseAll(post.author)} ${verifiedIcon}</span>
+                    <span class="post-handle" style="cursor:pointer;" onclick="openUserProfile('${post.handle}')">${post.handle}</span>
                 </div>
-                <div class="post-text" style="font-size:18px; margin-top:8px;">${parseEmojis(post.text)}</div>
+                <div class="post-text" style="font-size:18px; margin-top:8px;">${parseAll(post.text)}</div>
                 ${post.image ? `<img src="${post.image}" class="post-img" style="margin-top:12px;">` : ''}
                 ${pollHTML}
                 <div style="color:var(--text-secondary); font-size:14px; margin-top:16px;">${timeStr} · ${post.stats.views} بازدید</div>
@@ -728,9 +1023,6 @@ function renderPostDetail(id) {
     document.getElementById('post-detail-content').innerHTML = detailHTML;
 }
 
-// ========================
-// جستجو و ثبت توییت
-// ========================
 document.getElementById('search-input').addEventListener('input', (e) => {
     const query = e.target.value.trim().toLowerCase();
     const resultsContainer = document.getElementById('search-results');
@@ -740,6 +1032,11 @@ document.getElementById('search-input').addEventListener('input', (e) => {
 });
 
 document.getElementById('btn-compose').addEventListener('click', () => {
+    if (document.getElementById('view-messages').classList.contains('active')) {
+        openNewChatModal();
+        return;
+    }
+    
     editingPostId = null;
     document.getElementById('compose-modal-title').textContent = 'نوشتن ویراست';
     document.getElementById('compose-text').value = '';
