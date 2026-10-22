@@ -1,4 +1,4 @@
-const CACHE_NAME = 'Virasty-P-V1';
+const CACHE_NAME = 'viraasti-v2'; // نسخه کش را به v2 تغییر دادیم تا مرورگر فایل‌های جدید را دانلود کند
 
 // لیست فایل‌هایی که باید برای اجرای آفلاین کش بشن
 const ASSETS = [
@@ -9,7 +9,7 @@ const ASSETS = [
   './manifest.json',
   './Logo.png',
   './blue-tick.png',
-  './Font.ttf' // فونت اختصاصی به لیست کش اضافه شد
+  './Font.ttf' // فونت اختصاصی
 ];
 
 // مرحله نصب: کش کردن فایل‌ها
@@ -17,10 +17,10 @@ self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('در حال کش کردن فایل‌ها...');
+        console.log('در حال کش کردن فایل‌های نسخه جدید...');
         return cache.addAll(ASSETS);
       })
-      .then(() => self.skipWaiting())
+      .then(() => self.skipWaiting()) // مجبور کردن سرویس ورکر جدید به فعال شدن فوری
   );
 });
 
@@ -30,7 +30,10 @@ self.addEventListener('activate', e => {
     caches.keys().then(keys => 
       Promise.all(
         keys.filter(key => key !== CACHE_NAME)
-            .map(key => caches.delete(key))
+            .map(key => {
+                console.log('پاک کردن کش قدیمی:', key);
+                return caches.delete(key);
+            })
       )
     ).then(() => self.clients.claim())
   );
@@ -49,6 +52,7 @@ self.addEventListener('fetch', e => {
       // اگر نبود، از اینترنت بگیر
       return fetch(e.request).then(networkResponse => {
         // اگر جواب درست بود، یه کپی ازش توی کش ذخیره کن
+        // (این شرط باعث میشه فقط فایل‌های داخلی خود اپ کش بشن و ایموجی‌های آنلاین کش نشن)
         if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
           return networkResponse;
         }
