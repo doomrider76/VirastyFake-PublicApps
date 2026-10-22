@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ویراستی | شبکه اجتماعی</title>
+    <title>Virasty | شبکه اجتماعی</title>
     
     <link rel="icon" type="image/png" href="Logo.png">
     <link rel="apple-touch-icon" href="Logo.png">
@@ -55,7 +55,7 @@
 
     <main id="view-search" class="view">
         <div class="search-bar-container">
-            <input type="text" id="search-input" placeholder="جستجو در ویراستی...">
+            <input type="text" id="search-input" placeholder="جستجو در Virasty...">
         </div>
         <div id="search-results"></div>
     </main>
@@ -114,7 +114,7 @@
         <div id="post-detail-content"></div>
     </main>
 
-    <!-- تنظیمات (شامل مدیریت حساب‌ها) -->
+    <!-- تنظیمات -->
     <main id="view-settings" class="view">
         <header class="sub-header">
             <button type="button" class="icon-btn" onclick="goBack()"><svg><use href="#i-back"/></svg></button>
@@ -205,7 +205,7 @@
                     <label>تاریخ عضویت</label>
                     <input type="text" id="edit-joined" placeholder="مثلا فروردین ۱۴۰۳">
                     
-                    <label>تعداد فالوورها (دنبال‌کننده)</label>
+                    <label>تعداد فالوورها</label>
                     <input type="number" id="edit-followers" placeholder="مثلا 1000">
                     
                     <label>تعداد دنبال‌شده‌ها</label>
@@ -240,13 +240,33 @@
         </div>
     </div>
     
-    <!-- پاپ آپ انتخاب ریکشن (ایموجی های ویندوز ۱۱) -->
+    <!-- پاپ آپ انتخاب ریکشن -->
     <div id="reaction-popup" class="reaction-popup">
         <span class="reaction-opt" onclick="selectReaction('❤️')"><img src="https://api.iconify.design/fluent-emoji/red-heart.svg" alt="❤️"></span>
         <span class="reaction-opt" onclick="selectReaction('👍')"><img src="https://api.iconify.design/fluent-emoji/thumbs-up.svg" alt="👍"></span>
         <span class="reaction-opt" onclick="selectReaction('😂')"><img src="https://api.iconify.design/fluent-emoji/face-with-tears-of-joy.svg" alt="😂"></span>
         <span class="reaction-opt" onclick="selectReaction('🔥')"><img src="https://api.iconify.design/fluent-emoji/fire.svg" alt="🔥"></span>
         <span class="reaction-opt" onclick="selectReaction('😮')"><img src="https://api.iconify.design/fluent-emoji/face-with-open-mouth.svg" alt="😮"></span>
+    </div>
+
+    <!-- مودال بروزرسانی برنامه (Bottom Sheet) -->
+    <div class="modal-overlay" id="update-modal">
+        <div class="modal-content update-modal-content">
+            <div class="bottom-sheet-handle"></div>
+            <div class="update-icon">🚀</div>
+            <h2>Virasty بروز شد!</h2>
+            <p>نسخه جدید با امکانات و تغییرات زیر در دسترس شماست:</p>
+            <ul class="changelog">
+                <li><img src="https://api.iconify.design/fluent-emoji/sparkles.svg" class="emoji-img" alt="✨"> افزودن تبدیل خودکار تمام ایموجی‌ها به ویندوز ۱۱</li>
+                <li><img src="https://api.iconify.design/fluent-emoji/bar-chart.svg" class="emoji-img" alt="📊"> قابلیت نظرسنجی و اتصال به هوش مصنوعی</li>
+                <li><img src="https://api.iconify.design/fluent-emoji/rocket.svg" class="emoji-img" alt="🚀"> انیمیشن کشویی زیبا برای پنل بروزرسانی</li>
+                <li><img src="https://api.iconify.design/fluent-emoji/wrench.svg" class="emoji-img" alt="🔧"> رفع باگ نمایش و سازگاری کامل با تمام گوشی‌ها</li>
+            </ul>
+            <div class="update-actions">
+                <button class="btn-primary" id="btn-do-update">بروزرسانی کن</button>
+                <button class="btn-secondary" id="btn-dismiss-update">بیخیال</button>
+            </div>
+        </div>
     </div>
 </div>
 
