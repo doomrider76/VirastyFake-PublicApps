@@ -4,8 +4,25 @@
 const KEY = 'viraasti_v1';
 const BACKUP_KEY = 'viraasti_backup_auto';
 
-const DEFAULT_AVATAR = 'https://ui-avatars.com/api/?name=User&background=1d9bf0&color=fff&size=200';
-const DEFAULT_HEADER = 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=800&h=300&fit=crop';
+const DEFAULT_AVATAR = 'https://ui-avatars.com/api/?name=User&background=1d9bf0&color=fff&size=400'; 
+const DEFAULT_HEADER = 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1500&h=500&fit=crop';
+
+// ========================
+// تنظیمات ایموجی‌های ویندوز ۱۱ (Fluent Emoji)
+// ========================
+const emojiMap = {
+    '❤️': 'https://api.iconify.design/fluent-emoji/red-heart.svg',
+    '👍': 'https://api.iconify.design/fluent-emoji/thumbs-up.svg',
+    '😂': 'https://api.iconify.design/fluent-emoji/face-with-tears-of-joy.svg',
+    '🔥': 'https://api.iconify.design/fluent-emoji/fire.svg',
+    '😮': 'https://api.iconify.design/fluent-emoji/face-with-open-mouth.svg'
+};
+
+function getEmojiImg(emoji, size = '18px') {
+    const url = emojiMap[emoji];
+    if (!url) return `<span>${emoji}</span>`; 
+    return `<img src="${url}" style="width: ${size}; height: ${size}; object-fit: contain; vertical-align: middle;" alt="${emoji}">`;
+}
 
 let state = {
     user: {
@@ -17,11 +34,12 @@ let state = {
         following: 50,
         avatar: DEFAULT_AVATAR,
         header: DEFAULT_HEADER,
-        isVerified: false
+        isVerified: false,
+        followedUsers: [] 
     },
+    accounts: [], 
     posts: [],
-    aiPosts: [],
-    followedUsers: []
+    aiPosts: []
 };
 
 let currentViewStack = ['home'];
@@ -29,6 +47,7 @@ let currentHomeTab = 'following';
 let currentProfileTab = 'ویراست‌ها';
 let activePostId = null;
 let currentReactionPostId = null;
+let isPollMode = false;
 
 // ========================
 // سیستم Load و Save
@@ -41,12 +60,16 @@ function load() {
         
         if (saved.user) {
             state.user = { ...state.user, ...saved.user };
-            if (!state.user.avatar) state.user.avatar = DEFAULT_AVATAR;
-            if (!state.user.header) state.user.header = DEFAULT_HEADER;
         }
+        if (saved.accounts) state.accounts = saved.accounts;
         if (Array.isArray(saved.posts)) state.posts = saved.posts;
         if (Array.isArray(saved.aiPosts)) state.aiPosts = saved.aiPosts;
-        if (Array.isArray(saved.followedUsers)) state.followedUsers = saved.followedUsers;
+        
+        if (saved.followedUsers && (!state.user.followedUsers || state.user.followedUsers.length === 0)) {
+            state.user.followedUsers = saved.followedUsers;
+        }
+        if (!state.user.followedUsers) state.user.followedUsers = [];
+
     } catch (e) { console.error('خطا در بارگذاری:', e); }
 }
 
@@ -55,7 +78,19 @@ function save() {
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
         try {
-            const s = JSON.stringify(state);
+            const allAccounts = [...(state.accounts || [])];
+            const existingIdx = allAccounts.findIndex(a => a.handle === state.user.handle);
+            if (existingIdx !== -1) allAccounts[existingIdx] = state.user;
+            else allAccounts.push(state.user);
+
+            const payload = {
+                user: state.user,
+                accounts: allAccounts,
+                posts: state.posts,
+                aiPosts: state.aiPosts
+            };
+
+            const s = JSON.stringify(payload);
             localStorage.setItem(KEY, s);
             localStorage.setItem(BACKUP_KEY, s);
         } catch (e) { console.error('خطا در ذخیره:', e); }
@@ -74,6 +109,23 @@ if (state.aiPosts.length === 0) {
             isVerified: true, ts: now - (2 * 60 * 60 * 1000),
             text: 'هوش مصنوعی گوگل (Gemini) به‌روزرسانی جدیدی دریافت کرد که می‌تواند ویدیوهای طولانی را در چند ثانیه خلاصه کند. این فناوری قرار است به زودی به اپلیکیشن یوتیوب اضافه شود. 🤖🎥',
             image: null, stats: generateStats(50000),
+            myReaction: null, liked: false, retweeted: false, bookmarked: false
+        },
+        {
+            id: 'ai2', author: 'هوش مصنوعی ویراستی', handle: '@ViraastiAI',
+            avatar: 'https://ui-avatars.com/api/?name=AI&background=8b5cf6&color=fff',
+            isVerified: true, ts: now - (5 * 60 * 60 * 1000),
+            text: 'به نظر شما مهم‌ترین تأثیر هوش مصنوعی بر شبکه‌های اجتماعی در سال آینده چه خواهد بود؟ 🤖',
+            image: null, stats: generateStats(12000),
+            poll: {
+                question: 'مهم‌ترین تأثیر هوش مصنوعی بر شبکه‌های اجتماعی؟',
+                options: [
+                    { text: 'تولید محتوای خودکار', votes: 45 },
+                    { text: 'تشخیص اخبار جعلی', votes: 80 },
+                    { text: 'الگوریتم‌های پیشنهاددهنده هوشمندتر', votes: 32 }
+                ],
+                votedIndex: null
+            },
             myReaction: null, liked: false, retweeted: false, bookmarked: false
         }
     ];
@@ -115,7 +167,7 @@ function createPostHTML(post) {
                 const isReacted = post.myReaction === emoji ? 'reacted' : '';
                 reactionsHTML += `
                     <button type="button" class="reaction-pill ${isReacted}" onclick="toggleReaction(event, '${post.id}', '${emoji}')">
-                        <span>${emoji}</span>
+                        ${getEmojiImg(emoji)}
                         <span class="rp-count">${count.toLocaleString('fa-IR')}</span>
                     </button>
                 `;
@@ -124,13 +176,41 @@ function createPostHTML(post) {
     }
     reactionsHTML += `<button type="button" class="add-reaction-btn" onclick="openReactionPicker(event, '${post.id}')">${iconReaction}</button></div>`;
 
-    const isFollowed = state.followedUsers.includes(post.handle) || post.handle === state.user.handle;
+    const followedList = state.user.followedUsers || [];
+    const isFollowed = followedList.includes(post.handle) || post.handle === state.user.handle;
     const followBtnHTML = (!isFollowed && currentHomeTab === 'foryou') 
         ? `<button type="button" class="follow-btn" onclick="followUser(event, '${post.handle}')">دنبال کردن</button>` 
         : '';
         
     const timeStr = post.ts ? formatTimeAgo(post.ts) : (post.time || 'همین حالا');
     const verifiedIcon = post.isVerified ? `<img src="blue-tick.png" class="verified-icon" alt="verified">` : '';
+
+    let pollHTML = '';
+    if (post.poll) {
+        const totalVotes = post.poll.options.reduce((sum, opt) => sum + opt.votes, 0);
+        const hasVoted = post.poll.votedIndex !== null;
+        
+        pollHTML = `<div class="poll-container" onclick="event.stopPropagation();">
+            <div class="poll-question">${post.poll.question}</div>`;
+            
+        post.poll.options.forEach((opt, index) => {
+            const percent = totalVotes === 0 ? 0 : Math.round((opt.votes / totalVotes) * 100);
+            const isSelected = post.poll.votedIndex === index;
+            const selectedClass = isSelected ? 'selected' : '';
+            
+            pollHTML += `
+                <div class="poll-option ${selectedClass}" onclick="votePoll(event, '${post.id}', ${index})">
+                    <div class="poll-progress" style="width: ${hasVoted ? percent : 0}%"></div>
+                    <div class="poll-option-content">
+                        <span class="poll-option-text">${opt.text} ${isSelected ? '✓' : ''}</span>
+                        ${hasVoted ? `<span class="poll-option-percent">${percent.toLocaleString('fa-IR')}%</span>` : ''}
+                    </div>
+                </div>
+            `;
+        });
+        
+        pollHTML += `<div class="poll-footer">${totalVotes.toLocaleString('fa-IR')} رأی ${hasVoted ? '· شما رأی داده‌اید' : ''}</div></div>`;
+    }
 
     return `
         <div class="post" onclick="openPostDetail(event, '${post.id}')">
@@ -147,6 +227,7 @@ function createPostHTML(post) {
                 <div class="post-text">${post.text}</div>
                 ${post.image ? `<img src="${post.image}" class="post-img" alt="Post Image">` : ''}
                 
+                ${pollHTML}
                 ${reactionsHTML}
 
                 <div class="post-actions">
@@ -167,10 +248,11 @@ function renderFeeds() {
     if (currentHomeTab === 'foryou') {
         displayPosts = [...state.aiPosts, ...state.posts];
     } else {
+        const followedList = state.user.followedUsers || [];
         displayPosts = state.posts.filter(p => 
-            state.followedUsers.includes(p.handle) || p.handle === state.user.handle
+            followedList.includes(p.handle) || p.handle === state.user.handle
         );
-        const followedAIPosts = state.aiPosts.filter(p => state.followedUsers.includes(p.handle));
+        const followedAIPosts = state.aiPosts.filter(p => followedList.includes(p.handle));
         displayPosts = [...followedAIPosts, ...displayPosts];
     }
 
@@ -221,17 +303,75 @@ function renderProfileFeed() {
 }
 
 // ========================
+// مدیریت اکانت‌ها
+// ========================
+function renderAccountList() {
+    const container = document.getElementById('account-list');
+    if (!container) return;
+    
+    const allUsers = [state.user, ...(state.accounts || []).filter(u => u.handle !== state.user.handle)];
+    
+    container.innerHTML = allUsers.map(u => `
+        <div class="account-card ${u.handle === state.user.handle ? 'active' : ''}">
+            <div class="account-info">
+                <img src="${u.avatar || DEFAULT_AVATAR}" class="account-avatar">
+                <div class="account-details">
+                    <span class="account-name">${u.name}</span>
+                    <span class="account-handle">${u.handle}</span>
+                </div>
+            </div>
+            ${u.handle === state.user.handle 
+                ? '<span class="btn-active-label">فعال</span>' 
+                : `<button class="btn-switch" onclick="switchAccount('${u.handle}')">تغییر</button>`
+            }
+        </div>
+    `).join('');
+}
+
+function switchAccount(handle) {
+    const existingIdx = state.accounts.findIndex(a => a.handle === state.user.handle);
+    if (existingIdx !== -1) state.accounts[existingIdx] = state.user;
+    else state.accounts.push(state.user);
+
+    const newUser = state.accounts.find(a => a.handle === handle);
+    if (newUser) {
+        state.user = newUser;
+        save();
+        renderProfile();
+        renderFeeds();
+        renderAccountList();
+        switchView('home'); 
+    }
+}
+
+// ========================
 // اکشن‌ها
 // ========================
 function followUser(e, handle) {
     e.stopPropagation();
-    if (!state.followedUsers.includes(handle)) {
-        state.followedUsers.push(handle);
+    if (!state.user.followedUsers) state.user.followedUsers = [];
+    
+    if (!state.user.followedUsers.includes(handle)) {
+        state.user.followedUsers.push(handle);
         state.user.following = (state.user.following || 0) + 1;
         save();
         renderFeeds();
         document.getElementById('profile-following').textContent = state.user.following.toLocaleString('fa-IR');
     }
+}
+
+function votePoll(e, id, optionIndex) {
+    e.stopPropagation();
+    const post = [...state.posts, ...state.aiPosts].find(p => p.id == id);
+    if (!post || !post.poll) return;
+    
+    if (post.poll.votedIndex !== null) return; // اگر قبلا رای داده، کاری نکن
+    
+    post.poll.options[optionIndex].votes += 1;
+    post.poll.votedIndex = optionIndex;
+    
+    save();
+    renderFeeds();
 }
 
 function toggleReaction(e, id, emoji) {
@@ -335,7 +475,8 @@ function switchView(viewName) {
     
     const topTabs = document.getElementById('home-tabs-container');
     const header = document.getElementById('main-header');
-    if (viewName === 'profile' || viewName === 'search' || viewName === 'notifications' || viewName === 'bookmarks' || viewName === 'settings') {
+    
+    if (viewName === 'profile' || viewName === 'search' || viewName === 'notifications' || viewName === 'bookmarks' || viewName === 'settings' || viewName === 'post-detail') {
         if(header) header.style.display = 'none';
         if(topTabs) topTabs.style.display = 'none';
     } else {
@@ -344,6 +485,7 @@ function switchView(viewName) {
     }
     
     if (viewName === 'profile') renderProfile();
+    if (viewName === 'settings') renderAccountList();
     if (currentViewStack[currentViewStack.length - 1] !== viewName) currentViewStack.push(viewName);
 }
 
@@ -356,7 +498,8 @@ function goBack() {
         
         const topTabs = document.getElementById('home-tabs-container');
         const header = document.getElementById('main-header');
-        if (prev === 'profile' || prev === 'search' || prev === 'notifications' || prev === 'bookmarks') {
+        
+        if (prev === 'profile' || prev === 'search' || prev === 'notifications' || prev === 'bookmarks' || prev === 'settings' || prev === 'post-detail') {
             if(header) header.style.display = 'none';
             if(topTabs) topTabs.style.display = 'none';
         } else {
@@ -402,7 +545,7 @@ function renderProfile() {
 }
 
 function openPostDetail(e, id) {
-    if (e.target.closest('button')) return;
+    if (e.target.closest('button') || e.target.closest('.poll-option')) return;
     activePostId = id;
     renderPostDetail(id);
     switchView('post-detail');
@@ -414,6 +557,33 @@ function renderPostDetail(id) {
     const timeStr = post.ts ? formatTimeAgo(post.ts) : (post.time || 'همین حالا');
     const verifiedIcon = post.isVerified ? `<img src="blue-tick.png" class="verified-icon lg" alt="verified">` : '';
 
+    let pollHTML = '';
+    if (post.poll) {
+        const totalVotes = post.poll.options.reduce((sum, opt) => sum + opt.votes, 0);
+        const hasVoted = post.poll.votedIndex !== null;
+        
+        pollHTML = `<div class="poll-container" style="margin-top: 16px;">
+            <div class="poll-question">${post.poll.question}</div>`;
+            
+        post.poll.options.forEach((opt, index) => {
+            const percent = totalVotes === 0 ? 0 : Math.round((opt.votes / totalVotes) * 100);
+            const isSelected = post.poll.votedIndex === index;
+            const selectedClass = isSelected ? 'selected' : '';
+            
+            pollHTML += `
+                <div class="poll-option ${selectedClass}" onclick="votePoll(event, '${post.id}', ${index})">
+                    <div class="poll-progress" style="width: ${hasVoted ? percent : 0}%"></div>
+                    <div class="poll-option-content">
+                        <span class="poll-option-text">${opt.text} ${isSelected ? '✓' : ''}</span>
+                        ${hasVoted ? `<span class="poll-option-percent">${percent.toLocaleString('fa-IR')}%</span>` : ''}
+                    </div>
+                </div>
+            `;
+        });
+        
+        pollHTML += `<div class="poll-footer">${totalVotes.toLocaleString('fa-IR')} رأی ${hasVoted ? '· شما رأی داده‌اید' : ''}</div></div>`;
+    }
+
     const detailHTML = `
         <div class="post" style="border-bottom:none;">
             <div class="post-avatar"><img src="${post.avatar}"></div>
@@ -424,6 +594,7 @@ function renderPostDetail(id) {
                 </div>
                 <div class="post-text" style="font-size:18px; margin-top:8px;">${post.text}</div>
                 ${post.image ? `<img src="${post.image}" class="post-img" style="margin-top:12px;">` : ''}
+                ${pollHTML}
                 <div style="color:var(--text-secondary); font-size:14px; margin-top:16px;">${timeStr} · ${post.stats.views} بازدید</div>
             </div>
         </div>
@@ -447,18 +618,47 @@ document.getElementById('btn-compose').addEventListener('click', () => {
     document.getElementById('compose-text').value = '';
     document.getElementById('compose-image-preview').style.display = 'none';
     document.getElementById('compose-avatar').src = state.user.avatar || DEFAULT_AVATAR;
+    
+    // ریست کردن حالت نظرسنجی
+    document.getElementById('compose-poll-container').style.display = 'none';
+    document.getElementById('poll-question').value = '';
+    document.getElementById('poll-options-list').innerHTML = `
+        <input type="text" class="poll-option-input" placeholder="گزینه ۱">
+        <input type="text" class="poll-option-input" placeholder="گزینه ۲">
+    `;
+    isPollMode = false;
+
     document.getElementById('compose-modal').classList.add('show');
     setTimeout(() => document.getElementById('compose-text').focus(), 100);
 });
 
 // ========================
-// عکس‌ها
+// عکس‌ها و نظرسنجی
 // ========================
 let tempPostImage = null;
 let tempAvatar = null;
 let tempCover = null;
 
-function compressImage(file, maxSize, callback) {
+document.getElementById('btn-toggle-poll').addEventListener('click', () => {
+    const container = document.getElementById('compose-poll-container');
+    isPollMode = !isPollMode;
+    container.style.display = isPollMode ? 'block' : 'none';
+});
+
+document.getElementById('btn-add-poll-option').addEventListener('click', () => {
+    const list = document.getElementById('poll-options-list');
+    if (list.children.length >= 4) {
+        alert('حداکثر ۴ گزینه مجاز است.');
+        return;
+    }
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'poll-option-input';
+    input.placeholder = `گزینه ${list.children.length + 1}`;
+    list.appendChild(input);
+});
+
+function compressImage(file, maxWidth, maxHeight, callback) {
     const reader = new FileReader();
     reader.onload = (e) => {
         const img = new Image();
@@ -466,25 +666,30 @@ function compressImage(file, maxSize, callback) {
             const canvas = document.createElement('canvas');
             let width = img.width;
             let height = img.height;
-            if (width > maxSize || height > maxSize) {
-                if (width > height) { height *= maxSize / width; width = maxSize; }
-                else { width *= maxSize / height; height = maxSize; }
+
+            if (width > maxWidth || height > maxHeight) {
+                const ratio = Math.min(maxWidth / width, maxHeight / height);
+                width *= ratio;
+                height *= ratio;
             }
-            canvas.width = width; canvas.height = height;
-            canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-            callback(canvas.toDataURL('image/jpeg', 0.7));
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            callback(canvas.toDataURL('image/jpeg', 0.8));
         };
         img.src = e.target.result;
     };
     reader.readAsDataURL(file);
 }
 
-// Event Delegation برای آپلود عکس‌ها (مقاوم در برابر رفرش DOM)
 document.addEventListener('change', (e) => {
     if (e.target && e.target.id === 'upload-image') {
         const file = e.target.files[0];
         if (file) {
-            compressImage(file, 800, (base64) => {
+            compressImage(file, 800, 800, (base64) => {
                 tempPostImage = base64;
                 document.getElementById('preview-img').src = base64;
                 document.getElementById('compose-image-preview').style.display = 'block';
@@ -494,7 +699,7 @@ document.addEventListener('change', (e) => {
     if (e.target && e.target.id === 'upload-avatar') {
         const file = e.target.files[0];
         if (file) {
-            compressImage(file, 200, (base64) => {
+            compressImage(file, 400, 400, (base64) => {
                 tempAvatar = base64;
                 document.getElementById('edit-avatar-preview').innerHTML = `
                     <img src="${base64}" alt="Avatar">
@@ -507,7 +712,7 @@ document.addEventListener('change', (e) => {
     if (e.target && e.target.id === 'upload-cover') {
         const file = e.target.files[0];
         if (file) {
-            compressImage(file, 800, (base64) => {
+            compressImage(file, 1500, 500, (base64) => {
                 tempCover = base64;
                 document.getElementById('edit-cover-preview').style.backgroundImage = `url('${base64}')`;
             });
@@ -520,7 +725,31 @@ document.addEventListener('change', (e) => {
 // ========================
 document.getElementById('btn-submit-post').addEventListener('click', () => {
     const text = document.getElementById('compose-text').value.trim();
-    if (!text && !tempPostImage) return;
+    
+    let pollData = null;
+    if (isPollMode) {
+        const question = document.getElementById('poll-question').value.trim();
+        const optionInputs = document.querySelectorAll('.poll-option-input');
+        const options = [];
+        
+        optionInputs.forEach(input => {
+            const val = input.value.trim();
+            if (val) options.push({ text: val, votes: 0 });
+        });
+        
+        if (!question || options.length < 2) {
+            alert('لطفاً سوال و حداقل ۲ گزینه برای نظرسنجی وارد کنید.');
+            return;
+        }
+        
+        pollData = {
+            question: question,
+            options: options,
+            votedIndex: null
+        };
+    }
+
+    if (!text && !tempPostImage && !pollData) return;
     
     const newStats = generateStats(state.user.followers);
     
@@ -533,6 +762,7 @@ document.getElementById('btn-submit-post').addEventListener('click', () => {
         ts: Date.now(),
         text: text,
         image: tempPostImage,
+        poll: pollData,
         stats: newStats,
         myReaction: null, liked: false, retweeted: false, bookmarked: false
     };
@@ -544,6 +774,21 @@ document.getElementById('btn-submit-post').addEventListener('click', () => {
     document.getElementById('compose-modal').classList.remove('show');
     switchView('home');
     renderFeeds();
+
+    // ====== شبیه‌سازی هوش مصنوعی ======
+    // هوش مصنوعی ۲ ثانیه بعد به نظرسنجی شما رای می‌دهد
+    if (pollData) {
+        setTimeout(() => {
+            const postToVote = state.posts.find(p => p.id === newPost.id);
+            if (postToVote && postToVote.poll && postToVote.poll.votedIndex === null) {
+                // انتخاب یک گزینه تصادفی توسط هوش مصنوعی
+                const randomIndex = Math.floor(Math.random() * postToVote.poll.options.length);
+                postToVote.poll.options[randomIndex].votes += Math.floor(Math.random() * 20) + 5; // رای‌های اولیه از سمت AI
+                save();
+                renderFeeds();
+            }
+        }, 2000);
+    }
 });
 
 // ========================
@@ -598,7 +843,7 @@ document.querySelectorAll('.ptab').forEach(tab => {
 });
 
 // ========================
-// ذخیره تغییرات پروفایل (فیکس نهایی)
+// ذخیره تغییرات پروفایل
 // ========================
 document.getElementById('btn-save-profile').addEventListener('click', (e) => {
     e.preventDefault();
@@ -639,6 +884,52 @@ document.getElementById('btn-save-profile').addEventListener('click', (e) => {
     
     tempAvatar = null;
     tempCover = null;
+});
+
+// ========================
+// ساخت اکانت جدید
+// ========================
+document.getElementById('btn-create-account').addEventListener('click', () => {
+    const name = document.getElementById('new-account-name').value.trim();
+    const handleInput = document.getElementById('new-account-handle').value.trim();
+    
+    if (!name || !handleInput) return;
+    
+    const handle = '@' + handleInput.replace(/@/g, '').replace(/\s+/g, '');
+    
+    if (state.user.handle === handle || (state.accounts || []).some(a => a.handle === handle)) {
+        alert('این نام کاربری قبلا استفاده شده است.');
+        return;
+    }
+    
+    const newUser = {
+        name: name,
+        handle: handle,
+        bio: 'به ویراستی خوش آمدید!',
+        joinedDate: 'فروردین ۱۴۰۳',
+        followers: 0,
+        following: 0,
+        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff&size=400`,
+        header: DEFAULT_HEADER,
+        isVerified: false,
+        followedUsers: []
+    };
+    
+    const existingIdx = (state.accounts || []).findIndex(a => a.handle === state.user.handle);
+    if (!state.accounts) state.accounts = [];
+    if (existingIdx !== -1) state.accounts[existingIdx] = state.user;
+    else state.accounts.push(state.user);
+    
+    state.user = newUser;
+    save();
+    renderProfile();
+    renderFeeds();
+    renderAccountList();
+    
+    document.getElementById('add-account-modal').classList.remove('show');
+    document.getElementById('new-account-name').value = '';
+    document.getElementById('new-account-handle').value = '';
+    switchView('home');
 });
 
 // تولید آمار
