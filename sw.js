@@ -1,4 +1,4 @@
-const CACHE_NAME = 'viraasti-v1';
+const CACHE_NAME = 'Virasty-P-V1';
 
 // لیست فایل‌هایی که باید برای اجرای آفلاین کش بشن
 const ASSETS = [
@@ -9,7 +9,7 @@ const ASSETS = [
   './manifest.json',
   './Logo.png',
   './blue-tick.png',
-  'https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css'
+  './Font.ttf' // فونت اختصاصی به لیست کش اضافه شد
 ];
 
 // مرحله نصب: کش کردن فایل‌ها
