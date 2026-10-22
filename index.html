@@ -207,7 +207,13 @@
                         <span id="compose-account-handle" style="font-size: 13px; color: var(--text-secondary); direction: ltr; text-align: right;">@user</span>
                     </div>
                 </div>
-                <textarea id="compose-text" placeholder="چه خبر؟" rows="4"></textarea>
+                
+                <!-- ساختار جدید برای نمایش لایو ایموجی‌ها -->
+                <div class="compose-input-wrapper">
+                    <div id="compose-highlight" class="compose-highlight"></div>
+                    <textarea id="compose-text" placeholder="چه خبر؟" rows="4"></textarea>
+                </div>
+
             </div>
             
             <div class="compose-poll-container" id="compose-poll-container" style="display: none;">
@@ -340,26 +346,23 @@
         <span class="reaction-opt" onclick="selectReaction('😮')"><img src="https://api.iconify.design/fluent-emoji/face-with-open-mouth.svg" alt="😮"></span>
     </div>
 
-    <!-- مودال بروزرسانی برنامه -->
     <div class="modal-overlay" id="update-modal">
         <div class="modal-content update-modal-content">
             <div class="bottom-sheet-handle"></div>
-            <div class="update-icon">🎉</div>
-            <h2>ویراستی بروزرسانی شد!</h2>
+            <div class="update-icon">🚀</div>
+            <h2>Virasty بروز شد!</h2>
             <p>نسخه جدید با امکانات و تغییرات زیر در دسترس شماست:</p>
             <ul class="changelog">
-                <li><img src="https://api.iconify.design/fluent-emoji/sparkles.svg" class="emoji-img" alt="✨">محیط کاملا ایرانیزه</li>
-                <li><img src="https://api.iconify.design/fluent-emoji/sparkles.svg" class="emoji-img" alt="🌷">محیط کاملا پاک و به دور از حاشیه</li>
-                <li><img src="https://api.iconify.design/fluent-emoji/sparkles.svg" class="emoji-img" alt="📣">کاملا سبک و روان و بدونه ایراد</li>
+                <li><img src="https://api.iconify.design/fluent-emoji/sparkles.svg" class="emoji-img" alt="✨"> نمایش ایموجی‌های ویندوز ۱۱ در لحظه تایپ (Liquid Glass)</li>
+                <li><img src="https://api.iconify.design/fluent-emoji/wrench.svg" class="emoji-img" alt="🔧"> افزایش کیفیت رندر ایموجی‌ها</li>
             </ul>
             <div class="update-actions">
-                <button class="btn-primary" id="btn-do-update">بروزرسانی کن</button>
-                <button class="btn-secondary" id="btn-dismiss-update">بیخیال</button>
+                <button class="btn-primary" id="btn-do-update">بروزرسانی کن 👍</button>
+                <button class="btn-secondary" id="btn-dismiss-update">بیخیال👎</button>
             </div>
         </div>
     </div>
     
-    <!-- کانتینر اعلانات شناور داخلی -->
     <div id="toast-container"></div>
 </div>
 
