@@ -16,7 +16,6 @@
     --glass-border: rgba(255, 255, 255, 0.1);
     --font-family: 'CustomFont', sans-serif;
     
-    --safe-top: env(safe-area-inset-top, 0px);
     --header-height: 56px; 
     --nav-height: 58px;
 }
@@ -43,7 +42,7 @@ svg { width: 24px; height: 24px; }
     background: var(--glass-bg);
     backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
     position: fixed; 
-    top: calc(4px + var(--safe-top));
+    top: 12px;
     left: 12px; right: 12px; 
     z-index: 1000;
     border-radius: 30px; 
@@ -71,7 +70,7 @@ svg { width: 24px; height: 24px; }
 /* تب‌های بالای صفحه */
 .top-tabs-container {
     position: fixed; 
-    top: calc(4px + var(--safe-top) + var(--header-height) + 4px); 
+    top: calc(12px + var(--header-height) + 8px); 
     left: 12px; right: 12px; 
     height: var(--header-height); 
     z-index: 999; 
@@ -100,7 +99,7 @@ svg { width: 24px; height: 24px; }
     background: var(--glass-bg);
     backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
     position: fixed; 
-    top: calc(4px + var(--safe-top));
+    top: 12px;
     left: 12px; right: 12px; 
     z-index: 1000;
     border-radius: 30px; 
@@ -116,7 +115,7 @@ svg { width: 24px; height: 24px; }
 
 /* هدرهای داخلی عادی */
 .sub-header { 
-    display: flex; align-items: center; gap: 16px; padding: calc(12px + var(--safe-top)) 20px 12px; 
+    display: flex; align-items: center; gap: 16px; padding: 12px 20px; 
     background: var(--glass-bg);
     backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--glass-border); border-top: none;
@@ -130,20 +129,20 @@ svg { width: 24px; height: 24px; }
 /* ویوها */
 .view {
     height: 100vh; height: 100dvh;
-    padding-top: calc(4px + var(--safe-top) + var(--header-height) + 4px + var(--header-height) + 4px); 
-    padding-bottom: 75px; 
+    padding-top: calc(12px + var(--header-height) + 8px + var(--header-height) + 8px); 
+    padding-bottom: 80px; /* فضا برای منوی پایین */
     overflow-y: auto; display: none; background-color: var(--bg-color);
     overscroll-behavior-y: contain;
 }
 .view.active { display: block; }
 
 /* تنظیمات اختصاصی ویوها */
-#view-messages, #view-settings, #view-user-profile { padding-top: calc(80px + var(--safe-top)) !important; padding-bottom: 75px; }
+#view-messages, #view-settings, #view-user-profile { padding-top: calc(12px + var(--header-height) + 8px) !important; padding-bottom: 80px; }
 #view-profile { padding-top: 0; }
 #view-post-detail { padding-top: 0; padding-bottom: 30px; } 
 
 /* صفحه چت */
-#view-chat { padding-top: calc(80px + var(--safe-top)) !important; padding-bottom: 0; height: 100dvh; flex-direction: column; }
+#view-chat { padding-top: calc(12px + var(--header-height) + 8px) !important; padding-bottom: 0; height: 100dvh; flex-direction: column; }
 #view-chat.active { display: flex; } 
 
 #post-detail-content {
@@ -237,7 +236,7 @@ svg { width: 24px; height: 24px; }
 
 /* پروفایل */
 .cover-photo { height: 180px; background-size: cover; background-position: center; position: relative; background-color: var(--bg-color); border-radius: 0 0 20px 20px; }
-.back-btn { position: absolute; top: calc(16px + var(--safe-top)); right: 16px; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); color: white; }
+.back-btn { position: absolute; top: 16px; right: 16px; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); color: white; }
 
 .profile-actions-row { display: flex; justify-content: space-between; align-items: flex-end; padding: 0 16px; margin-top: 0; position: relative; min-height: 60px; }
 .profile-avatar { width: 84px; height: 84px; border-radius: 40%; border: 4px solid var(--bg-color); background: var(--bg-color); overflow: hidden; margin-top: -46px; }
@@ -260,11 +259,11 @@ svg { width: 24px; height: 24px; }
 .ptab.active { color: var(--text-primary); background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.1); }
 
 /* ========================================= */
-/* دکمه شناور نوشتن (چسبیده به پایین) */
+/* دکمه شناور نوشتن (شناور بالای منو) */
 /* ========================================= */
 .fab { 
     position: fixed; 
-    bottom: 70px !important; 
+    bottom: 82px; /* 12px فاصله منو + 58px ارتفاع + 12px فاصله */
     left: 16px; 
     background: var(--accent-color); color: white; display: flex; align-items: center; gap: 6px; 
     padding: 12px 20px; border-radius: 30px; font-weight: 800; font-size: 16px; 
@@ -274,14 +273,15 @@ svg { width: 24px; height: 24px; }
 .fab span { margin-right: 4px; }
 .fab svg { stroke: white; }
 
-/* منوی پایین (دقیقاً چسبیده به لبه با 2 پیکسل فاصله) */
+/* منوی پایین (دقیقاً مثل عکسی که فرستادی، شناور با فاصله کم) */
 .bottom-nav { 
     position: fixed; 
-    bottom: 2px !important; 
-    left: 12px; right: 12px; 
+    bottom: 12px; /* دقیقاً 12 پیکسل از پایین */
+    left: 14px; right: 14px; 
     background: var(--glass-bg); backdrop-filter: blur(24px) saturate(200%); -webkit-backdrop-filter: blur(24px) saturate(200%); 
     border: 1px solid var(--glass-border); border-top-color: rgba(255,255,255,0.2); 
-    border-radius: 999px; display: flex; justify-content: space-around; align-items: center; padding: 6px 8px; 
+    border-radius: 999px; /* کاملا گرد و کپسولی */
+    display: flex; justify-content: space-around; align-items: center; padding: 6px 8px; 
     height: 58px;
     z-index: 1000; 
     box-shadow: 0 8px 32px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.14), inset 0 -1px 0 rgba(0,0,0,.12); 
@@ -480,15 +480,15 @@ svg { width: 24px; height: 24px; }
     text-align: left;
 }
 
-/* باکس تایپ چت (هماهنگ با منوی پایین) */
+/* باکس تایپ چت (شناور مثل منوی پایین) */
 .chat-input-area {
     position: fixed;
-    bottom: 2px !important;
-    left: 12px; right: 12px;
+    bottom: 12px; /* دقیقاً 12 پیکسل */
+    left: 14px; right: 14px;
     background: var(--glass-bg);
     backdrop-filter: blur(24px) saturate(200%); -webkit-backdrop-filter: blur(24px) saturate(200%);
     border: 1px solid var(--glass-border); border-top-color: rgba(255,255,255,0.2);
-    border-radius: 40px;
+    border-radius: 999px; /* کپسولی */
     padding: 8px 12px;
     display: flex;
     align-items: center;
