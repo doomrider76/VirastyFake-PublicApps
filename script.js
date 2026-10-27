@@ -4,19 +4,23 @@
 const APP_VERSION = '1.0.1'; 
 const CURRENT_VER_KEY = 'viraasti_app_version';
 
-function getCurrentPersianDate() {
+// ✅ تبدیل هر تایم‌استمپی به تاریخ شمسی
+function getPersianDate(ts = Date.now()) {
     try {
-        const now = new Date();
         const parts = new Intl.DateTimeFormat('fa-IR', { 
             month: 'long', 
             year: 'numeric' 
-        }).formatToParts(now);
+        }).formatToParts(new Date(ts));
         const month = parts.find(p => p.type === 'month')?.value || '';
         const year = parts.find(p => p.type === 'year')?.value || '';
         return `\u200F${month} ${year}`;
     } catch(e) {
         return 'نامشخص';
     }
+}
+
+function getCurrentPersianDate() {
+    return getPersianDate(Date.now());
 }
 
 function checkForUpdate() {
@@ -138,7 +142,7 @@ const DEFAULT_AVATAR = 'https://ui-avatars.com/api/?name=User&background=1d9bf0&
 const DEFAULT_HEADER = 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1500&h=500&fit=crop';
 
 // ========================
-// نشان‌های تأیید (۴ نوع — هر کدام فایل خودش)
+// نشان‌های تأیید (۴ نوع)
 // ========================
 const BADGE_TYPES = {
     'blue':     { src: 'blue-tick.png',     title: 'نشان افراد سرشناس' },
@@ -205,7 +209,6 @@ function faToEnDigits(str) {
 function parseStatNum(v) { const n = parseInt(faToEnDigits(v), 10); return isNaN(n) ? 0 : n; }
 function faNum(n) { return Math.max(0, Math.floor(n)).toLocaleString('fa-IR'); }
 
-// ✅ نمایش فقط عدد با جداکننده فارسی (بدون «هزار» و «میلیون»)
 function formatStatDisplay(val) {
     if (val === null || val === undefined) return '۰';
     const n = typeof val === 'number' ? val : parseStatNum(val);
@@ -386,6 +389,7 @@ function startAIModerationSimulation() {
             isVerified: false,
             badgeType: null,
             ts: Date.now(),
+            joinedDate: getCurrentPersianDate(), // ✅ ثبت تاریخ ساخت برای AI های جدید
             text: randomText,
             image: null,
             stats: generateStats(Math.floor(Math.random() * 500) + 100, 0),
@@ -398,20 +402,21 @@ function startAIModerationSimulation() {
     }, 45000); 
 }
 
+// ✅ اضافه کردن تاریخ ساخت به اکانت‌های اولیه
 if (state.aiPosts.length === 0) {
     const now = Date.now();
     state.aiPosts = [
         {
             id: 'ai1', author: 'اخبار هوش مصنوعی', handle: '@AINews', avatar: 'https://ui-avatars.com/api/?name=AI&background=1d9bf0&color=fff',
             isVerified: true, badgeType: 'yellow',
-            ts: now - (2 * 60 * 60 * 1000),
+            ts: now - (2 * 60 * 60 * 1000), joinedDate: 'فروردین ۱۴۰۲',
             text: 'هوش مصنوعی گوگل (Gemini) به‌روزرسانی جدیدی دریافت کرد. 🤖🎥',
             image: null, stats: generateStats(50000, 2 * 60 * 60 * 1000), myReaction: null, liked: false, retweeted: false, bookmarked: false
         },
         {
             id: 'ai2', author: 'ورزش۳', handle: '@Varzesh3', avatar: 'https://ui-avatars.com/api/?name=ورزش&background=dc2626&color=fff',
             isVerified: true, badgeType: 'green',
-            ts: now - (4 * 60 * 60 * 1000),
+            ts: now - (4 * 60 * 60 * 1000), joinedDate: 'مرداد ۱۴۰۲',
             text: 'رئال مادرید در یک بازی نفس‌گیر موفق شد بارسلونا را شکست دهد و قهرمان شود! ⚽🏆🔥',
             image: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800&fit=crop',
             stats: generateStats(120000, 4 * 60 * 60 * 1000), myReaction: null, liked: false, retweeted: false, bookmarked: false
@@ -419,14 +424,14 @@ if (state.aiPosts.length === 0) {
         {
             id: 'ai3', author: 'تکنولوژی روز', handle: '@TechNews', avatar: 'https://ui-avatars.com/api/?name=Tech&background=3b82f6&color=fff',
             isVerified: true, badgeType: 'blue',
-            ts: now - (6 * 60 * 60 * 1000),
+            ts: now - (6 * 60 * 60 * 1000), joinedDate: 'آبان ۱۴۰۲',
             text: 'اپل از تراشه جدید M4 رونمایی کرد. این تراشه ۵۰ درصد سریع‌تر از نسل قبل است و در آیپد پرو جدید استفاده خواهد شد. 💻📱',
             image: null, stats: generateStats(85000, 6 * 60 * 60 * 1000), myReaction: null, liked: false, retweeted: false, bookmarked: false
         },
         {
             id: 'ai4', author: 'میم و سرگرمی', handle: '@Memes', avatar: 'https://ui-avatars.com/api/?name=Meme&background=f59e0b&color=fff',
             isVerified: true, badgeType: 'personal',
-            ts: now - (8 * 60 * 60 * 1000),
+            ts: now - (8 * 60 * 60 * 1000), joinedDate: 'دی ۱۴۰۲',
             text: 'وقتی میفهمی فردا امتحان داری و هنوز هیچی نخوندی: 😂💀',
             image: 'https://images.unsplash.com/photo-1543852786-1cf6624b9987?w=800&fit=crop',
             stats: generateStats(250000, 8 * 60 * 60 * 1000), myReaction: null, liked: false, retweeted: false, bookmarked: false
@@ -579,17 +584,34 @@ function renderNotifications() {
     }).join('');
 }
 
+// ✅ تابع اصلاح‌شده: خواندن تاریخ ساخت از حافظه
 function getUserInfo(handle) {
     if (handle === state.user.handle) return state.user;
-    const acc = state.accounts.find(a => a.handle === handle);
-    if (acc) return acc;
     
-    const post = [...state.posts, ...state.aiPosts].find(p => p.handle === handle);
-    if (post) {
+    const acc = state.accounts.find(a => a.handle === handle);
+    if (acc) {
+        if (!acc.joinedDate) {
+            acc.joinedDate = getCurrentPersianDate();
+            save();
+        }
+        return acc;
+    }
+    
+    const userPosts = [...state.posts, ...state.aiPosts].filter(p => p.handle === handle);
+    if (userPosts.length > 0) {
+        const post = userPosts[0];
+        if (!post.joinedDate) {
+            post.joinedDate = getCurrentPersianDate();
+            [...state.posts, ...state.aiPosts].forEach(p => {
+                if (p.handle === handle) p.joinedDate = post.joinedDate;
+            });
+            save();
+        }
+        
         return { 
             name: post.author, handle: post.handle, avatar: post.avatar, 
             header: DEFAULT_HEADER, bio: 'به Virasty خوش آمدید!', 
-            joinedDate: 'نامشخص',
+            joinedDate: post.joinedDate,
             followers: Math.floor(Math.random() * 1000) + 100,
             following: Math.floor(Math.random() * 500),
             isVerified: post.isVerified, badgeType: post.badgeType 
@@ -663,6 +685,12 @@ function openUserProfile(rawHandle) {
                 <div class="profile-stats">
                     <span><b>${formatStatDisplay(u.following || 0)}</b> دنبال‌شده</span>
                     <span><b>${formatStatDisplay(u.followers || 0)}</b> دنبال‌کننده</span>
+                </div>
+                <div class="profile-meta">
+                    <span class="meta-item">
+                        <svg><use href="#i-chart"/></svg>
+                        <span>عضو شده در <span>${u.joinedDate || getCurrentPersianDate()}</span></span>
+                    </span>
                 </div>
             </div>
         </div>
@@ -1528,6 +1556,7 @@ document.getElementById('btn-submit-post').addEventListener('click', () => {
         isVerified: authorAccount.isVerified,
         badgeType: authorAccount.badgeType,
         ts: Date.now(), 
+        joinedDate: authorAccount.joinedDate || getCurrentPersianDate(),
         text, 
         image: tempPostImage, 
         poll: pollData, 
