@@ -4,7 +4,6 @@
 const APP_VERSION = '1.0.1'; 
 const CURRENT_VER_KEY = 'viraasti_app_version';
 
-// ✅ تبدیل هر تایم‌استمپی به تاریخ شمسی
 function getPersianDate(ts = Date.now()) {
     try {
         const parts = new Intl.DateTimeFormat('fa-IR', { 
@@ -64,21 +63,16 @@ document.getElementById('btn-dismiss-update').addEventListener('click', () => {
     document.getElementById('update-modal').classList.remove('show');
 });
 
+// ✅ دکمه بررسی بروزرسانی (با رفرش کامل)
 document.getElementById('btn-check-update')?.addEventListener('click', async function() {
     const btn = this;
     const originalHTML = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<svg style="width:20px;height:20px;animation:spin 1s linear infinite;"><use href="#i-refresh"/></svg> در حال بررسی...';
 
-    showToast('در حال بررسی بروزرسانی...', 'info');
+    showToast('درحال بررسی ورژن و آخرین بروزرسانی', 'info');
 
-    try {
-        if ('caches' in window) {
-            const cacheNames = await caches.keys();
-            for (let name of cacheNames) await caches.delete(name);
-        }
-    } catch(e) { console.warn('Cache clear failed:', e); }
-
+    // 1. تلاش برای دریافت نسخه سرور
     let serverVersion = null;
     try {
         const response = await fetch('script.js?nocache=' + Date.now(), { cache: 'no-store' });
@@ -91,28 +85,29 @@ document.getElementById('btn-check-update')?.addEventListener('click', async fun
         console.warn('Version fetch failed:', e);
     }
 
-    await new Promise(r => setTimeout(r, 500));
-
-    const savedVersion = localStorage.getItem(CURRENT_VER_KEY);
-
-    btn.disabled = false;
-    btn.innerHTML = originalHTML;
-
-    if (serverVersion === null) {
-        if (savedVersion === APP_VERSION) {
-            showToast('✓ شما از آخرین نسخه استفاده می‌کنید', 'success');
-        } else {
-            document.getElementById('update-modal').classList.add('show');
+    // 2. پاک‌سازی کش و سرویس‌ورکر
+    try {
+        if ('caches' in window) {
+            const cacheNames = await caches.keys();
+            for (let name of cacheNames) await caches.delete(name);
         }
-    } else if (serverVersion === APP_VERSION) {
-        if (savedVersion !== APP_VERSION) {
-            localStorage.setItem(CURRENT_VER_KEY, APP_VERSION);
+        if ('serviceWorker' in navigator) {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (let registration of registrations) await registration.unregister();
         }
-        showToast('✓ شما از آخرین نسخه استفاده می‌کنید', 'success');
+    } catch(e) { console.warn('Clear cache failed:', e); }
+
+    // 3. علامت‌گذاری برای نمایش پیام بعد از رفرش
+    if (serverVersion && serverVersion !== APP_VERSION) {
+        sessionStorage.setItem('update_available_version', serverVersion);
     } else {
-        sessionStorage.setItem('pending_server_version', serverVersion);
-        document.getElementById('update-modal').classList.add('show');
+        sessionStorage.setItem('update_checked', '1');
     }
+
+    // 4. رفرش کامل صفحه
+    setTimeout(() => {
+        window.location.href = window.location.pathname + '?v=' + Date.now();
+    }, 500);
 });
 
 // ========================
@@ -227,6 +222,7 @@ function updateComposeHighlight() {
     highlight.scrollTop = document.getElementById('compose-text').scrollTop;
 }
 
+// ✅ اضافه شدن آرایه notifications به state
 let state = {
     user: {
         name: 'کاربر Virasty', handle: '@user_viraasti', bio: 'به Virasty خوش آمدید!', 
@@ -239,7 +235,8 @@ let state = {
     aiPosts: [],
     directMessages: [], 
     bannedUsers: [],
-    warnSenderAccount: null 
+    warnSenderAccount: null,
+    notifications: [] // ✅ اضافه شد
 };
 
 let currentViewStack = ['home'];
@@ -267,6 +264,7 @@ function load() {
         if (Array.isArray(saved.aiPosts)) state.aiPosts = saved.aiPosts;
         if (Array.isArray(saved.directMessages)) state.directMessages = saved.directMessages;
         if (Array.isArray(saved.bannedUsers)) state.bannedUsers = saved.bannedUsers;
+        if (Array.isArray(saved.notifications)) state.notifications = saved.notifications; // ✅ لود اعلانات
         if (saved.warnSenderAccount) state.warnSenderAccount = saved.warnSenderAccount;
         else state.warnSenderAccount = state.user.handle;
         
@@ -300,7 +298,8 @@ function doSave() {
         const payload = {
             user: state.user, accounts: state.accounts, posts: state.posts, aiPosts: state.aiPosts,
             directMessages: state.directMessages, bannedUsers: state.bannedUsers,
-            warnSenderAccount: state.warnSenderAccount
+            warnSenderAccount: state.warnSenderAccount,
+            notifications: state.notifications // ✅ ذخیره اعلانات
         };
         const s = JSON.stringify(payload);
 
@@ -329,6 +328,22 @@ function saveNow() { clearTimeout(saveTimer); doSave(); }
 load();
 if (!state.warnSenderAccount) state.warnSenderAccount = state.user.handle;
 try { localStorage.removeItem('emojiDataCache'); } catch(e) {}
+
+// ✅ تابع جدید برای اضافه کردن اعلان
+function addNotification(text, type = 'info') {
+    if (!state.notifications) state.notifications = [];
+    state.notifications.unshift({
+        id: Date.now().toString(),
+        text: text,
+        type: type,
+        time: Date.now(),
+        read: false
+    });
+    save();
+    if (document.getElementById('view-notifications').classList.contains('active')) {
+        renderNotifications();
+    }
+}
 
 // ========================
 // توابع کمکی
@@ -389,7 +404,7 @@ function startAIModerationSimulation() {
             isVerified: false,
             badgeType: null,
             ts: Date.now(),
-            joinedDate: getCurrentPersianDate(), // ✅ ثبت تاریخ ساخت برای AI های جدید
+            joinedDate: getCurrentPersianDate(),
             text: randomText,
             image: null,
             stats: generateStats(Math.floor(Math.random() * 500) + 100, 0),
@@ -397,12 +412,12 @@ function startAIModerationSimulation() {
         };
         
         state.aiPosts.unshift(newPost);
+        addNotification(`ویراست جدیدی توسط ${randomUser.author} منتشر شد.`, 'post'); // ✅ اعلان ویراست جدید
         save();
         renderFeeds();
     }, 45000); 
 }
 
-// ✅ اضافه کردن تاریخ ساخت به اکانت‌های اولیه
 if (state.aiPosts.length === 0) {
     const now = Date.now();
     state.aiPosts = [
@@ -556,25 +571,29 @@ function renderProfileFeed() {
     }
 }
 
+// ✅ رندر واقعی اعلانات
 function renderNotifications() {
     const container = document.getElementById('notifications-list');
     if (!container) return;
 
-    const dummyNotifications = [
-        { id: 1, type: 'like', text: 'کاربر <b>ورزش۳</b> ویراست شما را لایک کرد.', time: Date.now() - 1000 * 60 * 5 },
-        { id: 2, type: 'reply', text: 'کاربر <b>تکنولوژی روز</b> به ویراست شما پاسخ داد: "عالی بود!"', time: Date.now() - 1000 * 60 * 60 * 2 },
-        { id: 3, type: 'retweet', text: 'کاربر <b>اخبار هوش مصنوعی</b> ویراست شما را بازنشر کرد.', time: Date.now() - 1000 * 60 * 60 * 5 }
-    ];
+    if (!state.notifications || state.notifications.length === 0) {
+        container.innerHTML = `<div class="empty-state"><h3>هیچ اعلانی ندارید</h3></div>`;
+        return;
+    }
 
-    container.innerHTML = dummyNotifications.map(n => {
+    container.innerHTML = state.notifications.map(n => {
         let iconHTML = '';
         if (n.type === 'like') iconHTML = `<svg><use href="#i-heart"/></svg>`;
         else if (n.type === 'reply') iconHTML = `<svg><use href="#i-reply"/></svg>`;
         else if (n.type === 'retweet') iconHTML = `<svg><use href="#i-retweet"/></svg>`;
+        else if (n.type === 'dm') iconHTML = `<svg><use href="#i-mail"/></svg>`;
+        else if (n.type === 'alert') iconHTML = `<svg><use href="#i-alert"/></svg>`;
+        else if (n.type === 'post') iconHTML = `<svg><use href="#i-pen"/></svg>`;
+        else iconHTML = `<svg><use href="#i-bell"/></svg>`;
 
         return `
             <div class="notification-item">
-                <div class="notification-icon">${iconHTML}</div>
+                <div class="notification-icon" style="${n.type === 'alert' ? 'background:rgba(249,24,128,0.1);color:#f91880;' : ''}">${iconHTML}</div>
                 <div class="notification-content">
                     <div class="notification-text">${n.text}</div>
                     <div class="notification-time">${formatTimeAgo(n.time)}</div>
@@ -584,9 +603,14 @@ function renderNotifications() {
     }).join('');
 }
 
-// ✅ تابع اصلاح‌شده: خواندن تاریخ ساخت از حافظه
 function getUserInfo(handle) {
-    if (handle === state.user.handle) return state.user;
+    if (!handle) return state.user;
+    if (handle === state.user.handle) {
+        if (!state.user.joinedDate) {
+            state.user.joinedDate = getCurrentPersianDate();
+        }
+        return state.user;
+    }
     
     const acc = state.accounts.find(a => a.handle === handle);
     if (acc) {
@@ -600,10 +624,11 @@ function getUserInfo(handle) {
     const userPosts = [...state.posts, ...state.aiPosts].filter(p => p.handle === handle);
     if (userPosts.length > 0) {
         const post = userPosts[0];
-        if (!post.joinedDate) {
-            post.joinedDate = getCurrentPersianDate();
+        let jd = post.joinedDate;
+        if (!jd) {
+            jd = getCurrentPersianDate();
             [...state.posts, ...state.aiPosts].forEach(p => {
-                if (p.handle === handle) p.joinedDate = post.joinedDate;
+                if (p.handle === handle) p.joinedDate = jd;
             });
             save();
         }
@@ -611,7 +636,7 @@ function getUserInfo(handle) {
         return { 
             name: post.author, handle: post.handle, avatar: post.avatar, 
             header: DEFAULT_HEADER, bio: 'به Virasty خوش آمدید!', 
-            joinedDate: post.joinedDate,
+            joinedDate: jd,
             followers: Math.floor(Math.random() * 1000) + 100,
             following: Math.floor(Math.random() * 500),
             isVerified: post.isVerified, badgeType: post.badgeType 
@@ -621,7 +646,7 @@ function getUserInfo(handle) {
     return { 
         name: handle.replace('@', ''), handle: handle, avatar: DEFAULT_AVATAR, 
         header: DEFAULT_HEADER, bio: 'کاربر Virasty', 
-        joinedDate: 'نامشخص',
+        joinedDate: getCurrentPersianDate(),
         followers: 0, following: 0, isVerified: false, badgeType: null 
     };
 }
@@ -665,6 +690,22 @@ function openUserProfile(rawHandle) {
     const userPosts = [...state.posts, ...state.aiPosts].filter(p => p.handle === handle);
     const isFollowing = (state.user.followedUsers || []).includes(handle);
     
+    let finalJoinedDate = u.joinedDate;
+    if (!finalJoinedDate) {
+        const acc = state.accounts.find(a => a.handle === handle);
+        if (acc && acc.joinedDate) finalJoinedDate = acc.joinedDate;
+    }
+    if (!finalJoinedDate) {
+        const ps = [...state.posts, ...state.aiPosts].filter(p => p.handle === handle);
+        if (ps.length > 0) {
+            for (const p of ps) {
+                if (p.joinedDate) { finalJoinedDate = p.joinedDate; break; }
+            }
+        }
+    }
+    if (!finalJoinedDate) finalJoinedDate = getCurrentPersianDate();
+    if (finalJoinedDate === 'نامشخص') finalJoinedDate = getCurrentPersianDate();
+
     content.innerHTML = `
         <div class="profile-section">
             <div class="cover-photo" style="background-image: url('${u.header || DEFAULT_HEADER}');">
@@ -689,7 +730,7 @@ function openUserProfile(rawHandle) {
                 <div class="profile-meta">
                     <span class="meta-item">
                         <svg><use href="#i-chart"/></svg>
-                        <span>عضو شده در <span>${u.joinedDate || getCurrentPersianDate()}</span></span>
+                        <span>عضو شده در ${finalJoinedDate}</span>
                     </span>
                 </div>
             </div>
@@ -836,6 +877,7 @@ document.getElementById('btn-send-chat').addEventListener('click', () => {
         read: true
     };
     state.directMessages.push(newMsg);
+    addNotification(`پیام شما برای ${activeChatUser} با موفقیت ارسال شد.`, 'dm'); // ✅ اعلان ارسال پیام
     save();
     input.value = '';
     openChat(activeChatUser);
@@ -859,6 +901,7 @@ document.getElementById('chat-upload-image').addEventListener('change', (e) => {
                 read: true
             };
             state.directMessages.push(newMsg);
+            addNotification(`عکس شما برای ${activeChatUser} ارسال شد.`, 'dm'); // ✅ اعلان ارسال عکس
             save();
             openChat(activeChatUser);
         }, null, 0.75);
@@ -1069,6 +1112,7 @@ document.getElementById('btn-submit-warn').addEventListener('click', () => {
             read: false
         };
         state.directMessages.unshift(newDM);
+        addNotification(`اخطار برای ${post.author} با موفقیت ارسال شد.`, 'alert'); // ✅ اعلان ارسال اخطار
         save();
         renderMessages();
         showToast(`اخطار با موفقیت از طرف ${senderInfo.name} ارسال شد.`, 'success');
@@ -1156,12 +1200,18 @@ function startNewChat() {
     openChat(handle);
 }
 
+// ✅ renderAccountList با دکمه حذف
 function renderAccountList() {
     const container = document.getElementById('account-list');
     if (!container) return;
     const allUsers = [state.user, ...(state.accounts || []).filter(u => u.handle !== state.user.handle)];
-    container.innerHTML = allUsers.map(u => `
-        <div class="account-card ${u.handle === state.user.handle ? 'active' : ''}">
+    
+    container.innerHTML = allUsers.map(u => {
+        const isActive = u.handle === state.user.handle;
+        const deleteBtn = !isActive ? `<button class="btn-delete-account" onclick="deleteAccount(event, '${u.handle}')" title="حذف اکانت"><svg><use href="#i-trash"/></svg></button>` : '';
+        
+        return `
+        <div class="account-card ${isActive ? 'active' : ''}">
             <div class="account-info">
                 <img src="${u.avatar || DEFAULT_AVATAR}" class="account-avatar">
                 <div class="account-details">
@@ -1169,9 +1219,43 @@ function renderAccountList() {
                     <span class="account-handle">${u.handle}</span>
                 </div>
             </div>
-            ${u.handle === state.user.handle ? '<span class="btn-active-label">فعال</span>' : `<button class="btn-switch" onclick="switchAccount('${u.handle}')">تغییر</button>`}
+            <div style="display:flex; gap:8px; align-items:center;">
+                ${isActive ? '<span class="btn-active-label">فعال</span>' : `<button class="btn-switch" onclick="switchAccount('${u.handle}')">تغییر</button>`}
+                ${deleteBtn}
+            </div>
         </div>
-    `).join('');
+    `}).join('');
+}
+
+// ✅ تابع جدید حذف اکانت
+function deleteAccount(e, handle) {
+    e.stopPropagation();
+    
+    if (handle === state.user.handle) {
+        showToast('برای حذف، ابتدا به اکانت دیگری بروید.', 'error');
+        return;
+    }
+    
+    if (!confirm(`آیا مطمئن هستید که می‌خواهید اکانت ${handle} را برای همیشه حذف کنید؟`)) return;
+
+    // حذف اکانت
+    state.accounts = state.accounts.filter(a => a.handle !== handle);
+    
+    // حذف پست‌ها و پیام‌های مربوط به این اکانت
+    state.posts = state.posts.filter(p => p.handle !== handle);
+    state.aiPosts = state.aiPosts.filter(p => p.handle !== handle);
+    state.directMessages = state.directMessages.filter(m => m.sender !== handle && m.recipient !== handle);
+    
+    // حذف از لیست دنبال شده‌ها
+    if (state.user.followedUsers) {
+        state.user.followedUsers = state.user.followedUsers.filter(h => h !== handle);
+    }
+    
+    saveNow();
+    renderAccountList();
+    renderFeeds();
+    renderProfile();
+    showToast('اکانت با موفقیت حذف شد.', 'success');
 }
 
 function switchAccount(handle) {
@@ -1565,6 +1649,7 @@ document.getElementById('btn-submit-post').addEventListener('click', () => {
     };
     
     state.posts.unshift(newPost);
+    addNotification('ویراست شما با موفقیت منتشر شد.', 'post'); // ✅ اعلان انتشار ویراست
     saveNow();
     tempPostImage = null;
     document.getElementById('compose-modal').classList.remove('show');
@@ -1846,6 +1931,18 @@ window.addEventListener('pagehide', saveNow);
 window.addEventListener('beforeunload', saveNow);
 
 document.addEventListener('DOMContentLoaded', () => {
+    // ✅ نمایش پیام موفقیت‌آمیز بودن بروزرسانی بعد از رفرش
+    if (sessionStorage.getItem('update_checked') === '1') {
+        sessionStorage.removeItem('update_checked');
+        setTimeout(() => showToast('✓ شما از آخرین نسخه استفاده می‌کنید', 'success'), 1000);
+    }
+    
+    // ✅ اگر آپدیتی موجود بود، مودال نمایش داده میشه (منطق داخل checkForUpdate)
+    if (sessionStorage.getItem('update_available_version')) {
+        sessionStorage.removeItem('update_available_version');
+        setTimeout(() => document.getElementById('update-modal').classList.add('show'), 1000);
+    }
+
     renderFeeds();
     renderProfile();
     switchHomeTab('following');
@@ -1856,8 +1953,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const versionEl = document.getElementById('settings-version');
     if (versionEl) versionEl.textContent = APP_VERSION;
-
-    sessionStorage.removeItem('update_check_pending');
 
     document.getElementById('compose-text').addEventListener('input', updateComposeHighlight);
     document.getElementById('compose-text').addEventListener('scroll', function() {
