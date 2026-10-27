@@ -1,4 +1,4 @@
-const CACHE_NAME = 'viraasti-v1.0.2'; 
+const CACHE_NAME = 'viraasti-v1.0.3'; 
 
 const ASSETS = [
   './',
@@ -8,6 +8,9 @@ const ASSETS = [
   './manifest.json',
   './Logo.png',
   './blue-tick.png',
+  './yellow-tick.png',
+  './green-tick.png',
+  './personal-tick.png',
   './Font.ttf'
 ];
 
@@ -39,7 +42,6 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   
-  // استراتژی شبکه اول (Network First) برای درخواست‌های HTML و ناوبری
   if (e.request.mode === 'navigate' || (e.request.headers.get('accept') && e.request.headers.get('accept').includes('text/html'))) {
     e.respondWith(
       fetch(e.request)
@@ -58,7 +60,6 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // استراتژی کش اول (Cache First) برای فایل‌های استاتیک مثل CSS، JS و عکس‌ها
   e.respondWith(
     caches.match(e.request).then(cachedResponse => {
       if (cachedResponse) return cachedResponse;
@@ -73,7 +74,6 @@ self.addEventListener('fetch', e => {
         });
         return networkResponse;
       }).catch(() => {
-        // در صورت قطعی اینترنت، اگر فایل کش شده نبود، به صفحه اصلی برگرد
         return caches.match('./index.html');
       });
     })
