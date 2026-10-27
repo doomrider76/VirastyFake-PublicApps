@@ -4,7 +4,6 @@
 const APP_VERSION = '1.0.1'; 
 const CURRENT_VER_KEY = 'viraasti_app_version';
 
-// ✅ تاریخ شمسی فعلی — ترتیب تضمین‌شده: «ماه سال» (مثل: مهر ۱۴۰۵)
 function getCurrentPersianDate() {
     try {
         const now = new Date();
@@ -14,7 +13,6 @@ function getCurrentPersianDate() {
         }).formatToParts(now);
         const month = parts.find(p => p.type === 'month')?.value || '';
         const year = parts.find(p => p.type === 'year')?.value || '';
-        // اجبار ترتیب ماه قبل از سال (با RLM برای اطمینان از رندر صحیح RTL)
         return `\u200F${month} ${year}`;
     } catch(e) {
         return 'نامشخص';
@@ -62,7 +60,6 @@ document.getElementById('btn-dismiss-update').addEventListener('click', () => {
     document.getElementById('update-modal').classList.remove('show');
 });
 
-// ✅ دکمه بررسی بروزرسانی در تنظیمات (fetch-based، بدون رفرش)
 document.getElementById('btn-check-update')?.addEventListener('click', async function() {
     const btn = this;
     const originalHTML = btn.innerHTML;
@@ -141,7 +138,7 @@ const DEFAULT_AVATAR = 'https://ui-avatars.com/api/?name=User&background=1d9bf0&
 const DEFAULT_HEADER = 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1500&h=500&fit=crop';
 
 // ========================
-// نشان‌های تأیید (۴ نوع)
+// نشان‌های تأیید (۴ نوع — هر کدام فایل خودش)
 // ========================
 const BADGE_TYPES = {
     'blue':     { src: 'blue-tick.png',     title: 'نشان افراد سرشناس' },
@@ -208,6 +205,14 @@ function faToEnDigits(str) {
 function parseStatNum(v) { const n = parseInt(faToEnDigits(v), 10); return isNaN(n) ? 0 : n; }
 function faNum(n) { return Math.max(0, Math.floor(n)).toLocaleString('fa-IR'); }
 
+// ✅ نمایش فقط عدد با جداکننده فارسی (بدون «هزار» و «میلیون»)
+function formatStatDisplay(val) {
+    if (val === null || val === undefined) return '۰';
+    const n = typeof val === 'number' ? val : parseStatNum(val);
+    if (isNaN(n) || n < 0) return '۰';
+    return n.toLocaleString('fa-IR');
+}
+
 // ========================
 // آپدیت لایو باکس تایپ
 // ========================
@@ -219,7 +224,6 @@ function updateComposeHighlight() {
     highlight.scrollTop = document.getElementById('compose-text').scrollTop;
 }
 
-// ✅ joinedDate حالا به‌صورت خودکار = تاریخ امروز
 let state = {
     user: {
         name: 'کاربر Virasty', handle: '@user_viraasti', bio: 'به Virasty خوش آمدید!', 
@@ -452,7 +456,7 @@ function createPostHTML(post) {
         for (const [emoji, count] of Object.entries(post.stats.reactions)) {
             if (count > 0) {
                 const isReacted = post.myReaction === emoji ? 'reacted' : '';
-                reactionsHTML += `<button type="button" class="reaction-pill ${isReacted}" onclick="toggleReaction(event, '${post.id}', '${emoji}')">${getEmojiImg(emoji)}<span class="rp-count">${count.toLocaleString('fa-IR')}</span></button>`;
+                reactionsHTML += `<button type="button" class="reaction-pill ${isReacted}" onclick="toggleReaction(event, '${post.id}', '${emoji}')">${getEmojiImg(emoji)}<span class="rp-count">${formatStatDisplay(count)}</span></button>`;
             }
         }
     }
@@ -471,7 +475,7 @@ function createPostHTML(post) {
             const isSelected = post.poll.votedIndex === index;
             pollHTML += `<div class="poll-option ${isSelected ? 'selected' : ''}" onclick="votePoll(event, '${post.id}', ${index})"><div class="poll-progress" style="width: ${hasVoted ? percent : 0}%"></div><div class="poll-option-content"><span class="poll-option-text">${parseAll(opt.text)} ${isSelected ? '✓' : ''}</span>${hasVoted ? `<span class="poll-option-percent">${percent.toLocaleString('fa-IR')}%</span>` : ''}</div></div>`;
         });
-        pollHTML += `<div class="poll-footer">${totalVotes.toLocaleString('fa-IR')} رأی ${hasVoted ? '· شما رأی داده‌اید' : ''}</div></div>`;
+        pollHTML += `<div class="poll-footer">${formatStatDisplay(totalVotes)} رأی ${hasVoted ? '· شما رأی داده‌اید' : ''}</div></div>`;
     }
 
     return `
@@ -480,7 +484,7 @@ function createPostHTML(post) {
             <div class="post-content">
                 <div class="post-header" style="display:flex; flex-direction:column; margin-bottom:4px; width: 100%;">
                     <div style="display:flex; justify-content:space-between; align-items:flex-start; width: 100%;">
-                        <div style="display:flex; align-items:center; gap:2px; overflow:visible; min-width:0;">
+                        <div style="display:flex; align-items:center; gap:2px; overflow:hidden; min-width:0; flex:1;">
                             <span class="post-name" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer;" onclick="event.stopPropagation(); openUserProfile('${post.handle}')">${parseAll(post.author)}</span>${verifiedIcon}
                         </div>
                         <button type="button" class="post-more-btn" onclick="openPostOptions(event, '${post.id}')" style="margin-right: 0; padding: 0 4px; margin-top: 2px;"><svg style="width: 18px; height: 18px;"><use href="#i-more"/></svg></button>
@@ -495,10 +499,10 @@ function createPostHTML(post) {
                 ${post.image ? `<img src="${post.image}" class="post-img" alt="Post Image">` : ''}
                 ${pollHTML}
                 <div class="post-actions">
-                    <button type="button" class="action-btn"><svg><use href="#i-reply"/></svg> ${post.stats.replies}</button>
-                    <button type="button" class="action-btn retweet-btn ${post.retweeted ? 'retweeted' : ''}" onclick="toggleAction(event, '${post.id}', 'retweet')"><svg><use href="#i-retweet"/></svg> ${post.stats.retweets}</button>
-                    <button type="button" class="action-btn like-btn ${post.liked ? 'liked' : ''}" onclick="toggleAction(event, '${post.id}', 'like')"><svg><use href="#i-heart"/></svg> ${post.stats.likes}</button>
-                    <button type="button" class="action-btn"><svg><use href="#i-chart"/></svg> ${post.stats.views}</button>
+                    <button type="button" class="action-btn"><svg><use href="#i-reply"/></svg> ${formatStatDisplay(post.stats.replies)}</button>
+                    <button type="button" class="action-btn retweet-btn ${post.retweeted ? 'retweeted' : ''}" onclick="toggleAction(event, '${post.id}', 'retweet')"><svg><use href="#i-retweet"/></svg> ${formatStatDisplay(post.stats.retweets)}</button>
+                    <button type="button" class="action-btn like-btn ${post.liked ? 'liked' : ''}" onclick="toggleAction(event, '${post.id}', 'like')"><svg><use href="#i-heart"/></svg> ${formatStatDisplay(post.stats.likes)}</button>
+                    <button type="button" class="action-btn"><svg><use href="#i-chart"/></svg> ${formatStatDisplay(post.stats.views)}</button>
                     <button type="button" class="action-btn bookmark-btn ${post.bookmarked ? 'bookmarked' : ''}" onclick="toggleAction(event, '${post.id}', 'bookmark')"><svg><use href="#i-bookmark"/></svg></button>
                 </div>
                 ${reactionsHTML}
@@ -657,8 +661,8 @@ function openUserProfile(rawHandle) {
                 <span class="profile-handle">${u.handle}</span>
                 <p class="profile-bio">${parseAll(u.bio || 'کاربر ویراستی')}</p>
                 <div class="profile-stats">
-                    <span><b>${(u.following || 0).toLocaleString('fa-IR')}</b> دنبال‌شده</span>
-                    <span><b>${(u.followers || 0).toLocaleString('fa-IR')}</b> دنبال‌کننده</span>
+                    <span><b>${formatStatDisplay(u.following || 0)}</b> دنبال‌شده</span>
+                    <span><b>${formatStatDisplay(u.followers || 0)}</b> دنبال‌کننده</span>
                 </div>
             </div>
         </div>
@@ -1313,8 +1317,8 @@ function renderProfile() {
     if(nameEl) nameEl.innerHTML = `${parseAll(u.name)}${getBadgeHTML(u.badgeType, 'lg')}`;
     if(document.getElementById('profile-handle')) document.getElementById('profile-handle').textContent = u.handle;
     if(document.getElementById('profile-bio')) document.getElementById('profile-bio').innerHTML = parseAll(u.bio);
-    if(document.getElementById('profile-followers')) document.getElementById('profile-followers').textContent = (u.followers || 0).toLocaleString('fa-IR');
-    if(document.getElementById('profile-following')) document.getElementById('profile-following').textContent = (u.following || 0).toLocaleString('fa-IR');
+    if(document.getElementById('profile-followers')) document.getElementById('profile-followers').textContent = formatStatDisplay(u.followers || 0);
+    if(document.getElementById('profile-following')) document.getElementById('profile-following').textContent = formatStatDisplay(u.following || 0);
     if(document.getElementById('profile-joined-text')) document.getElementById('profile-joined-text').textContent = u.joinedDate || getCurrentPersianDate();
     
     const hAvEl = document.getElementById('header-avatar');
@@ -1344,7 +1348,7 @@ function renderPostDetail(id) {
             const isSelected = post.poll.votedIndex === index;
             pollHTML += `<div class="poll-option ${isSelected ? 'selected' : ''}" onclick="votePoll(event, '${post.id}', ${index})"><div class="poll-progress" style="width: ${hasVoted ? percent : 0}%"></div><div class="poll-option-content"><span class="poll-option-text">${parseAll(opt.text)} ${isSelected ? '✓' : ''}</span>${hasVoted ? `<span class="poll-option-percent">${percent.toLocaleString('fa-IR')}%</span>` : ''}</div></div>`;
         });
-        pollHTML += `<div class="poll-footer">${totalVotes.toLocaleString('fa-IR')} رأی ${hasVoted ? '· شما رأی داده‌اید' : ''}</div></div>`;
+        pollHTML += `<div class="poll-footer">${formatStatDisplay(totalVotes)} رأی ${hasVoted ? '· شما رأی داده‌اید' : ''}</div></div>`;
     }
 
     let reactionsHTML = '<div class="post-reactions" style="margin-top: 12px;">';
@@ -1352,7 +1356,7 @@ function renderPostDetail(id) {
         for (const [emoji, count] of Object.entries(post.stats.reactions)) {
             if (count > 0) {
                 const isReacted = post.myReaction === emoji ? 'reacted' : '';
-                reactionsHTML += `<button type="button" class="reaction-pill ${isReacted}" onclick="toggleReaction(event, '${post.id}', '${emoji}')">${getEmojiImg(emoji)}<span class="rp-count">${count.toLocaleString('fa-IR')}</span></button>`;
+                reactionsHTML += `<button type="button" class="reaction-pill ${isReacted}" onclick="toggleReaction(event, '${post.id}', '${emoji}')">${getEmojiImg(emoji)}<span class="rp-count">${formatStatDisplay(count)}</span></button>`;
             }
         }
     }
@@ -1373,7 +1377,7 @@ function renderPostDetail(id) {
                 <div class="post-text" style="font-size:18px; margin-top:8px;">${parseAll(post.text)}</div>
                 ${post.image ? `<img src="${post.image}" class="post-img" style="margin-top:12px;">` : ''}
                 ${pollHTML}
-                <div style="color:var(--text-secondary); font-size:14px; margin-top:16px;">${timeStr} · ${post.stats.views} بازدید</div>
+                <div style="color:var(--text-secondary); font-size:14px; margin-top:16px;">${timeStr} · ${formatStatDisplay(post.stats.views)} بازدید</div>
                 ${reactionsHTML}
             </div>
         </div>
@@ -1610,7 +1614,6 @@ document.getElementById('btn-save-profile').addEventListener('click', (e) => {
     tempCover = null;
 });
 
-// ✅ هنگام ساخت اکانت جدید، تاریخ عضویت = تاریخ امروز
 document.getElementById('btn-create-account').addEventListener('click', () => {
     const name = document.getElementById('new-account-name').value.trim();
     const handleInput = document.getElementById('new-account-handle').value.trim();
