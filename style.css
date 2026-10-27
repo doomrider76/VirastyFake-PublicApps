@@ -154,7 +154,17 @@ svg { width: 24px; height: 24px; }
     margin-bottom: 0;
 }
 
-/* ✅ کوچک‌کردن بصری زرد/سبز/شخصی تا با آبی برابر شوند (0.85 متعادل) */
+/* ✅ انتقال تیک آبی به پایین (۲ پیکسل پایین‌تر از حالت قبلی) */
+.verified-icon[src*="blue-tick"] {
+    position: relative;
+    top: 3px;
+}
+.verified-icon[src*="blue-tick"].lg {
+    position: relative;
+    top: 3px;
+}
+
+/* ✅ کوچک‌کردن بصری زرد/سبز/شخصی برای هم‌اندازه شدن با آبی */
 .verified-icon[src*="yellow-tick"],
 .verified-icon[src*="green-tick"],
 .verified-icon[src*="personal-tick"] {
@@ -295,6 +305,23 @@ svg { width: 24px; height: 24px; }
 .account-handle { font-size: 13px; color: var(--text-secondary); }
 .btn-switch { padding: 6px 12px; border-radius: 16px; background: var(--accent-color); color: white; font-size: 13px; font-weight: 700; flex-shrink: 0; }
 .btn-active-label { font-size: 13px; color: var(--accent-color); font-weight: 700; flex-shrink: 0; }
+
+/* ✅ دکمه حذف اکانت */
+.btn-delete-account {
+    padding: 6px;
+    border-radius: 12px;
+    background: rgba(249, 24, 128, 0.1);
+    color: #f91880;
+    border: 1px solid rgba(249, 24, 128, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s;
+}
+.btn-delete-account:hover { background: rgba(249, 24, 128, 0.2); }
+.btn-delete-account svg { width: 16px; height: 16px; }
 
 .notification-item { display: flex; align-items: center; gap: 12px; padding: 16px; border-bottom: 1px solid var(--border-color); background-color: var(--bg-color); transition: background 0.2s; cursor: pointer; }
 .notification-item:hover { background: rgba(255,255,255,0.03); }
