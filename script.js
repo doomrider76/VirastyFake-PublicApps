@@ -1,8 +1,25 @@
 // ========================
 // تنظیمات نسخه و بروزرسانی
 // ========================
-const APP_VERSION = '1.0.0'; 
+const APP_VERSION = '1.0.1'; 
 const CURRENT_VER_KEY = 'viraasti_app_version';
+
+// ✅ تاریخ شمسی فعلی — ترتیب تضمین‌شده: «ماه سال» (مثل: مهر ۱۴۰۵)
+function getCurrentPersianDate() {
+    try {
+        const now = new Date();
+        const parts = new Intl.DateTimeFormat('fa-IR', { 
+            month: 'long', 
+            year: 'numeric' 
+        }).formatToParts(now);
+        const month = parts.find(p => p.type === 'month')?.value || '';
+        const year = parts.find(p => p.type === 'year')?.value || '';
+        // اجبار ترتیب ماه قبل از سال (با RLM برای اطمینان از رندر صحیح RTL)
+        return `\u200F${month} ${year}`;
+    } catch(e) {
+        return 'نامشخص';
+    }
+}
 
 function checkForUpdate() {
     const savedVer = localStorage.getItem(CURRENT_VER_KEY);
@@ -15,23 +32,86 @@ function checkForUpdate() {
 
 document.getElementById('btn-do-update').addEventListener('click', async () => {
     const modal = document.getElementById('update-modal');
-    modal.classList.remove('show'); 
-    localStorage.setItem(CURRENT_VER_KEY, APP_VERSION);
+    modal.classList.remove('show');
+
+    const pendingVersion = sessionStorage.getItem('pending_server_version');
+    sessionStorage.removeItem('pending_server_version');
+    const versionToSave = pendingVersion || APP_VERSION;
+    localStorage.setItem(CURRENT_VER_KEY, versionToSave);
+
     setTimeout(async () => {
-        if ('caches' in window) {
-            const cacheNames = await caches.keys();
-            for (let name of cacheNames) await caches.delete(name);
-        }
-        if ('serviceWorker' in navigator) {
-            const registrations = await navigator.serviceWorker.getRegistrations();
-            for (let registration of registrations) await registration.unregister();
-        }
+        try {
+            if ('caches' in window) {
+                const cacheNames = await caches.keys();
+                for (let name of cacheNames) await caches.delete(name);
+            }
+        } catch(e) { console.warn('Cache clear failed:', e); }
+
+        try {
+            if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (let registration of registrations) await registration.unregister();
+            }
+        } catch(e) { console.warn('SW unregister failed:', e); }
+
         window.location.href = window.location.pathname + '?v=' + Date.now();
     }, 400); 
 });
 
 document.getElementById('btn-dismiss-update').addEventListener('click', () => {
     document.getElementById('update-modal').classList.remove('show');
+});
+
+// ✅ دکمه بررسی بروزرسانی در تنظیمات (fetch-based، بدون رفرش)
+document.getElementById('btn-check-update')?.addEventListener('click', async function() {
+    const btn = this;
+    const originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<svg style="width:20px;height:20px;animation:spin 1s linear infinite;"><use href="#i-refresh"/></svg> در حال بررسی...';
+
+    showToast('در حال بررسی بروزرسانی...', 'info');
+
+    try {
+        if ('caches' in window) {
+            const cacheNames = await caches.keys();
+            for (let name of cacheNames) await caches.delete(name);
+        }
+    } catch(e) { console.warn('Cache clear failed:', e); }
+
+    let serverVersion = null;
+    try {
+        const response = await fetch('script.js?nocache=' + Date.now(), { cache: 'no-store' });
+        if (response.ok) {
+            const text = await response.text();
+            const match = text.match(/APP_VERSION\s*=\s*['"]([^'"]+)['"]/);
+            if (match && match[1]) serverVersion = match[1];
+        }
+    } catch (e) {
+        console.warn('Version fetch failed:', e);
+    }
+
+    await new Promise(r => setTimeout(r, 500));
+
+    const savedVersion = localStorage.getItem(CURRENT_VER_KEY);
+
+    btn.disabled = false;
+    btn.innerHTML = originalHTML;
+
+    if (serverVersion === null) {
+        if (savedVersion === APP_VERSION) {
+            showToast('✓ شما از آخرین نسخه استفاده می‌کنید', 'success');
+        } else {
+            document.getElementById('update-modal').classList.add('show');
+        }
+    } else if (serverVersion === APP_VERSION) {
+        if (savedVersion !== APP_VERSION) {
+            localStorage.setItem(CURRENT_VER_KEY, APP_VERSION);
+        }
+        showToast('✓ شما از آخرین نسخه استفاده می‌کنید', 'success');
+    } else {
+        sessionStorage.setItem('pending_server_version', serverVersion);
+        document.getElementById('update-modal').classList.add('show');
+    }
 });
 
 // ========================
@@ -61,9 +141,39 @@ const DEFAULT_AVATAR = 'https://ui-avatars.com/api/?name=User&background=1d9bf0&
 const DEFAULT_HEADER = 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1500&h=500&fit=crop';
 
 // ========================
-// سیستم هوشمند تبدیل ایموجی‌ها و منشن‌ها
+// نشان‌های تأیید (۴ نوع)
 // ========================
-let emojiData = null;
+const BADGE_TYPES = {
+    'blue':     { src: 'blue-tick.png',     title: 'نشان افراد سرشناس' },
+    'yellow':   { src: 'yellow-tick.png',   title: 'نشان سازمانی' },
+    'green':    { src: 'green-tick.png',    title: 'نشان تجاری' },
+    'personal': { src: 'personal-tick.png', title: 'نشان شخصی' }
+};
+
+function getBadgeHTML(badgeType, size = '') {
+    if (!badgeType) return '';
+    const b = BADGE_TYPES[badgeType];
+    if (!b) return '';
+    const sizeClass = size ? ` ${size}` : '';
+    return `<img src="${b.src}" class="verified-icon${sizeClass}" alt="${b.title}" title="${b.title}">`;
+}
+
+function migrateBadge(obj) {
+    if (!obj) return obj;
+    if (obj.isVerified && !obj.badgeType) {
+        obj.badgeType = 'blue';
+    }
+    if (!obj.badgeType) {
+        obj.isVerified = false;
+    } else {
+        obj.isVerified = true;
+    }
+    return obj;
+}
+
+// ========================
+// ایموجی‌های Fluent (فقط برای ری‌اکشن‌ها)
+// ========================
 const emojiMap = {
     '❤️': 'red-heart', '👍': 'thumbs-up', '😂': 'face-with-tears-of-joy', '🔥': 'fire', '😮': 'face-with-open-mouth',
     '😭': 'loudly-crying-face', '😍': 'smiling-face-with-heart-eyes', '🙏': 'folded-hands', '😊': 'smiling-face-with-smiling-eyes', '🥺': 'pleading-face',
@@ -71,52 +181,7 @@ const emojiMap = {
     '👏': 'clapping-hands', '🎉': 'party-popper', '💀': 'skull', '🤣': 'rolling-on-the-floor-laughing', '😁': 'beaming-face-with-smiling-eyes'
 };
 
-async function initEmojiData() {
-    const cached = localStorage.getItem('emojiDataCache');
-    if (cached) { emojiData = JSON.parse(cached); return; }
-    try {
-        const res = await fetch('https://cdn.jsdelivr.net/npm/emojibase-data@15.0.0/en/compact.json');
-        const data = await res.json();
-        emojiData = {};
-        data.forEach(item => { emojiData[item.hexcode] = item.label; });
-        localStorage.setItem('emojiDataCache', JSON.stringify(emojiData));
-        renderFeeds(); renderProfile();
-        if (document.getElementById('view-post-detail').classList.contains('active') && activePostId) renderPostDetail(activePostId);
-    } catch (e) { console.error('خطا در دیتابیس ایموجی‌ها:', e); }
-}
-
-function parseEmojis(text) {
-    if (!text) return '';
-    if (!Intl.Segmenter) {
-        let parsed = text;
-        for (const [emoji, name] of Object.entries(emojiMap)) {
-            parsed = parsed.split(emoji).join(`<img src="https://api.iconify.design/fluent-emoji/${name}.svg" class="emoji-img" alt="${emoji}">`);
-        }
-        return parsed;
-    }
-    const segmenter = new Intl.Segmenter('en', { granularity: 'grapheme' });
-    const segments = segmenter.segment(text);
-    let result = '';
-    for (const { segment } of segments) {
-        let found = false;
-        const hexcode = Array.from(segment).map(c => c.codePointAt(0).toString(16).toUpperCase().padStart(4, '0')).join('-');
-        if (emojiData && emojiData[hexcode]) {
-            const label = emojiData[hexcode];
-            const kebabLabel = label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-            result += `<img src="https://api.iconify.design/fluent-emoji/${kebabLabel}.svg" class="emoji-img" alt="${segment}" onerror="this.replaceWith(document.createTextNode(this.alt))">`;
-            found = true;
-        } else {
-            for (const [emoji, name] of Object.entries(emojiMap)) {
-                if (segment === emoji) {
-                    result += `<img src="https://api.iconify.design/fluent-emoji/${name}.svg" class="emoji-img" alt="${segment}" onerror="this.replaceWith(document.createTextNode(this.alt))">`;
-                    found = true; break;
-                }
-            }
-        }
-        if (!found) result += segment;
-    }
-    return result;
-}
+function parseEmojis(text) { return text || ''; }
 
 function getEmojiImg(emoji, size = '18px') {
     const name = emojiMap[emoji];
@@ -126,31 +191,41 @@ function getEmojiImg(emoji, size = '18px') {
 
 function parseAll(text) {
     if (!text) return '';
-    let parsed = parseEmojis(text);
+    let parsed = text;
     parsed = parsed.replace(/(^|\s)(@[a-zA-Z0-9_آ-ی]+)/g, '$1<span class="mention" onclick="event.stopPropagation(); openUserProfile(\'$2\')">$2</span>');
     return parsed;
 }
 
 // ========================
-// آپدیت لایو باکس تایپ برای ایموجی‌ها
+// ابزارهای تبدیل اعداد
+// ========================
+function faToEnDigits(str) {
+    return String(str)
+        .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+        .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+        .replace(/[,٬،\u066C\u060C\s]/g, '');
+}
+function parseStatNum(v) { const n = parseInt(faToEnDigits(v), 10); return isNaN(n) ? 0 : n; }
+function faNum(n) { return Math.max(0, Math.floor(n)).toLocaleString('fa-IR'); }
+
+// ========================
+// آپدیت لایو باکس تایپ
 // ========================
 function updateComposeHighlight() {
     const text = document.getElementById('compose-text').value;
     const highlight = document.getElementById('compose-highlight');
-    if (text === '') {
-        highlight.innerHTML = '';
-    } else {
-        // یک فاصله نامرئی در انتها برای جلوگیری از به هم ریختن خطوط خالی
-        highlight.innerHTML = parseAll(text) + '<br>'; 
-    }
-    // همگام‌سازی اسکرول در صورت طولانی شدن متن
+    if (text === '') highlight.innerHTML = '';
+    else highlight.innerHTML = parseAll(text) + '<br>'; 
     highlight.scrollTop = document.getElementById('compose-text').scrollTop;
 }
 
+// ✅ joinedDate حالا به‌صورت خودکار = تاریخ امروز
 let state = {
     user: {
-        name: 'کاربر Virasty', handle: '@user_viraasti', bio: 'به Virasty خوش آمدید!', joinedDate: 'فروردین ۱۴۰۳',
-        followers: 100, following: 50, avatar: DEFAULT_AVATAR, header: DEFAULT_HEADER, isVerified: false, followedUsers: [] 
+        name: 'کاربر Virasty', handle: '@user_viraasti', bio: 'به Virasty خوش آمدید!', 
+        joinedDate: getCurrentPersianDate(),
+        followers: 100, following: 50, avatar: DEFAULT_AVATAR, header: DEFAULT_HEADER, 
+        isVerified: false, badgeType: null, followedUsers: [] 
     },
     accounts: [], 
     posts: [],
@@ -189,33 +264,64 @@ function load() {
         else state.warnSenderAccount = state.user.handle;
         
         if (!state.user.followedUsers) state.user.followedUsers = [];
+
+        migrateBadge(state.user);
+        state.accounts.forEach(a => migrateBadge(a));
+        state.posts.forEach(p => migrateBadge(p));
+        state.aiPosts.forEach(p => migrateBadge(p));
+        state.directMessages.forEach(m => {
+            if (m.isVerified && !m.badgeType) m.badgeType = 'blue';
+        });
     } catch (e) { console.error(e); }
 }
 
 let saveTimer = null;
-function save() {
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => {
-        try {
-            const allAccounts = [...(state.accounts || [])];
-            const existingIdx = allAccounts.findIndex(a => a.handle === state.user.handle);
-            if (existingIdx !== -1) allAccounts[existingIdx] = state.user;
-            else allAccounts.push(state.user);
 
-            const payload = {
-                user: state.user, accounts: allAccounts, posts: state.posts, aiPosts: state.aiPosts,
-                directMessages: state.directMessages, bannedUsers: state.bannedUsers,
-                warnSenderAccount: state.warnSenderAccount
-            };
-            const s = JSON.stringify(payload);
+function doSave() {
+    try {
+        const idx = state.accounts.findIndex(a => a === state.user || a.handle === state.user.handle);
+        if (idx !== -1) state.accounts[idx] = state.user;
+        else state.accounts.push(state.user);
+
+        const seen = new Set();
+        const unique = [];
+        for (const acc of state.accounts) {
+            if (!seen.has(acc.handle)) { unique.push(acc); seen.add(acc.handle); }
+        }
+        state.accounts = unique;
+
+        const payload = {
+            user: state.user, accounts: state.accounts, posts: state.posts, aiPosts: state.aiPosts,
+            directMessages: state.directMessages, bannedUsers: state.bannedUsers,
+            warnSenderAccount: state.warnSenderAccount
+        };
+        const s = JSON.stringify(payload);
+
+        try {
             localStorage.setItem(KEY, s);
             localStorage.setItem(BACKUP_KEY, s);
-        } catch (e) { console.error(e); }
-    }, 150);
+        } catch (quotaErr) {
+            console.warn('حافظه پر شد، تلاش بدون backup...', quotaErr);
+            try {
+                localStorage.removeItem(BACKUP_KEY);
+                localStorage.setItem(KEY, s);
+            } catch (e2) {
+                console.error('ذخیره‌سازی حتی بدون backup هم شکست خورد:', e2);
+                showToast('❌ حافظه پر است؛ تغییر ذخیره نشد. چند پست/عکس قدیمی را حذف کنید.', 'error');
+            }
+        }
+    } catch (e) {
+        console.error(e);
+        showToast('خطا در ذخیره‌سازی', 'error');
+    }
 }
+
+function save() { clearTimeout(saveTimer); saveTimer = setTimeout(doSave, 150); }
+function saveNow() { clearTimeout(saveTimer); doSave(); }
 
 load();
 if (!state.warnSenderAccount) state.warnSenderAccount = state.user.handle;
+try { localStorage.removeItem('emojiDataCache'); } catch(e) {}
 
 // ========================
 // توابع کمکی
@@ -227,13 +333,24 @@ function getAccountInfo(handle) {
     if (acc) return acc;
     const post = [...state.posts, ...state.aiPosts].find(p => p.handle === handle);
     if (post) {
-        return { name: post.author, handle: post.handle, avatar: post.avatar, isVerified: post.isVerified };
+        return { name: post.author, handle: post.handle, avatar: post.avatar, isVerified: post.isVerified, badgeType: post.badgeType };
     }
     return state.user;
 }
 
+function getAvailableAIVoters() {
+    const handles = new Set();
+    state.aiPosts.forEach(p => handles.add(p.handle));
+    aiBadUsers.forEach(u => handles.add(u.handle));
+    (state.accounts || []).forEach(a => { if (a.handle !== state.user.handle) handles.add(a.handle); });
+    state.posts.forEach(p => { if (p.handle !== state.user.handle) handles.add(p.handle); });
+    state.bannedUsers.forEach(h => handles.delete(h));
+    handles.delete(state.user.handle);
+    return [...handles];
+}
+
 // ========================
-// شبیه‌ساز هوش مصنوعی مدیریت محتوا
+// شبیه‌ساز هوش مصنوعی
 // ========================
 const aiBadUsers = [
     { author: 'کاربر ناشناس', handle: '@anon_772', avatar: 'https://ui-avatars.com/api/?name=User&background=444&color=fff' },
@@ -254,7 +371,6 @@ function startAIModerationSimulation() {
     setInterval(() => {
         const availableUsers = aiBadUsers.filter(u => !state.bannedUsers.includes(u.handle));
         if (availableUsers.length === 0) return;
-        
         const randomUser = availableUsers[Math.floor(Math.random() * availableUsers.length)];
         const randomText = aiBadTexts[Math.floor(Math.random() * aiBadTexts.length)];
         
@@ -264,10 +380,11 @@ function startAIModerationSimulation() {
             handle: randomUser.handle,
             avatar: randomUser.avatar,
             isVerified: false,
+            badgeType: null,
             ts: Date.now(),
             text: randomText,
             image: null,
-            stats: generateStats(Math.floor(Math.random() * 500)),
+            stats: generateStats(Math.floor(Math.random() * 500) + 100, 0),
             myReaction: null, liked: false, retweeted: false, bookmarked: false
         };
         
@@ -282,29 +399,33 @@ if (state.aiPosts.length === 0) {
     state.aiPosts = [
         {
             id: 'ai1', author: 'اخبار هوش مصنوعی', handle: '@AINews', avatar: 'https://ui-avatars.com/api/?name=AI&background=1d9bf0&color=fff',
-            isVerified: true, ts: now - (2 * 60 * 60 * 1000),
+            isVerified: true, badgeType: 'yellow',
+            ts: now - (2 * 60 * 60 * 1000),
             text: 'هوش مصنوعی گوگل (Gemini) به‌روزرسانی جدیدی دریافت کرد. 🤖🎥',
-            image: null, stats: generateStats(50000), myReaction: null, liked: false, retweeted: false, bookmarked: false
+            image: null, stats: generateStats(50000, 2 * 60 * 60 * 1000), myReaction: null, liked: false, retweeted: false, bookmarked: false
         },
         {
             id: 'ai2', author: 'ورزش۳', handle: '@Varzesh3', avatar: 'https://ui-avatars.com/api/?name=ورزش&background=dc2626&color=fff',
-            isVerified: true, ts: now - (4 * 60 * 60 * 1000),
+            isVerified: true, badgeType: 'green',
+            ts: now - (4 * 60 * 60 * 1000),
             text: 'رئال مادرید در یک بازی نفس‌گیر موفق شد بارسلونا را شکست دهد و قهرمان شود! ⚽🏆🔥',
             image: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800&fit=crop',
-            stats: generateStats(120000), myReaction: null, liked: false, retweeted: false, bookmarked: false
+            stats: generateStats(120000, 4 * 60 * 60 * 1000), myReaction: null, liked: false, retweeted: false, bookmarked: false
         },
         {
             id: 'ai3', author: 'تکنولوژی روز', handle: '@TechNews', avatar: 'https://ui-avatars.com/api/?name=Tech&background=3b82f6&color=fff',
-            isVerified: true, ts: now - (6 * 60 * 60 * 1000),
+            isVerified: true, badgeType: 'blue',
+            ts: now - (6 * 60 * 60 * 1000),
             text: 'اپل از تراشه جدید M4 رونمایی کرد. این تراشه ۵۰ درصد سریع‌تر از نسل قبل است و در آیپد پرو جدید استفاده خواهد شد. 💻📱',
-            image: null, stats: generateStats(85000), myReaction: null, liked: false, retweeted: false, bookmarked: false
+            image: null, stats: generateStats(85000, 6 * 60 * 60 * 1000), myReaction: null, liked: false, retweeted: false, bookmarked: false
         },
         {
             id: 'ai4', author: 'میم و سرگرمی', handle: '@Memes', avatar: 'https://ui-avatars.com/api/?name=Meme&background=f59e0b&color=fff',
-            isVerified: false, ts: now - (8 * 60 * 60 * 1000),
+            isVerified: true, badgeType: 'personal',
+            ts: now - (8 * 60 * 60 * 1000),
             text: 'وقتی میفهمی فردا امتحان داری و هنوز هیچی نخوندی: 😂💀',
             image: 'https://images.unsplash.com/photo-1543852786-1cf6624b9987?w=800&fit=crop',
-            stats: generateStats(250000), myReaction: null, liked: false, retweeted: false, bookmarked: false
+            stats: generateStats(250000, 8 * 60 * 60 * 1000), myReaction: null, liked: false, retweeted: false, bookmarked: false
         }
     ];
     save();
@@ -338,7 +459,7 @@ function createPostHTML(post) {
     reactionsHTML += `<button type="button" class="add-reaction-btn" onclick="openReactionPicker(event, '${post.id}')">${iconReaction}</button></div>`;
 
     const timeStr = post.ts ? formatTimeAgo(post.ts) : (post.time || 'همین حالا');
-    const verifiedIcon = post.isVerified ? `<img src="blue-tick.png" class="verified-icon" alt="verified">` : '';
+    const verifiedIcon = getBadgeHTML(post.badgeType);
 
     let pollHTML = '';
     if (post.poll) {
@@ -462,26 +583,20 @@ function getUserInfo(handle) {
     const post = [...state.posts, ...state.aiPosts].find(p => p.handle === handle);
     if (post) {
         return { 
-            name: post.author, 
-            handle: post.handle, 
-            avatar: post.avatar, 
-            header: DEFAULT_HEADER, 
-            bio: 'به Virasty خوش آمدید!', 
-            followers: Math.floor(Math.random() * 1000),
+            name: post.author, handle: post.handle, avatar: post.avatar, 
+            header: DEFAULT_HEADER, bio: 'به Virasty خوش آمدید!', 
+            joinedDate: 'نامشخص',
+            followers: Math.floor(Math.random() * 1000) + 100,
             following: Math.floor(Math.random() * 500),
-            isVerified: post.isVerified 
+            isVerified: post.isVerified, badgeType: post.badgeType 
         };
     }
     
     return { 
-        name: handle.replace('@', ''), 
-        handle: handle, 
-        avatar: DEFAULT_AVATAR, 
-        header: DEFAULT_HEADER, 
-        bio: 'کاربر Virasty', 
-        followers: 0, 
-        following: 0, 
-        isVerified: false 
+        name: handle.replace('@', ''), handle: handle, avatar: DEFAULT_AVATAR, 
+        header: DEFAULT_HEADER, bio: 'کاربر Virasty', 
+        joinedDate: 'نامشخص',
+        followers: 0, following: 0, isVerified: false, badgeType: null 
     };
 }
 
@@ -489,10 +604,7 @@ function openUserProfile(rawHandle) {
     if (!rawHandle) return;
     let handle = '@' + rawHandle.replace(/@/g, '').trim();
 
-    if (handle === state.user.handle) {
-        switchView('profile');
-        return;
-    }
+    if (handle === state.user.handle) { switchView('profile'); return; }
     
     const content = document.getElementById('user-profile-content');
     
@@ -541,7 +653,7 @@ function openUserProfile(rawHandle) {
                 </button>
             </div>
             <div class="profile-info">
-                <h1 class="profile-name">${parseAll(u.name)}${u.isVerified ? `<img src="blue-tick.png" class="verified-icon lg">` : ''}</h1>
+                <h1 class="profile-name">${parseAll(u.name)}${getBadgeHTML(u.badgeType, 'lg')}</h1>
                 <span class="profile-handle">${u.handle}</span>
                 <p class="profile-bio">${parseAll(u.bio || 'کاربر ویراستی')}</p>
                 <div class="profile-stats">
@@ -616,7 +728,7 @@ function renderMessages() {
                 <img src="${lastMsg.senderAvatar || uInfo.avatar}" class="dm-avatar" onclick="event.stopPropagation(); openUserProfile('${sender}')" style="object-fit: ${sender === '@support' ? 'contain' : 'cover'}; background: ${sender === '@support' ? 'white' : 'transparent'};">
                 <div class="dm-content" onclick="openChat('${sender}')">
                     <div class="dm-header">
-                        <span class="dm-name" onclick="event.stopPropagation(); openUserProfile('${sender}')">${lastMsg.senderName || uInfo.name}${lastMsg.isVerified ? `<img src="blue-tick.png" class="verified-icon">` : ''}</span>
+                        <span class="dm-name" onclick="event.stopPropagation(); openUserProfile('${sender}')">${lastMsg.senderName || uInfo.name}${getBadgeHTML(lastMsg.badgeType || uInfo.badgeType)}</span>
                         <span class="dm-time">${formatTimeAgo(lastMsg.ts)}</span>
                     </div>
                     <div class="dm-text">${parseAll(lastMsg.text)}</div>
@@ -657,7 +769,9 @@ function openChat(senderHandle) {
     document.getElementById('chat-header-handle').textContent = uInfo.handle;
     
     const tickEl = document.getElementById('chat-header-tick');
-    if (uInfo.isVerified || senderHandle === '@support') {
+    const badgeType = uInfo.badgeType || (senderHandle === '@support' ? 'blue' : null);
+    if (badgeType) {
+        tickEl.innerHTML = getBadgeHTML(badgeType);
         tickEl.style.display = 'inline-block';
     } else {
         tickEl.style.display = 'none';
@@ -683,6 +797,7 @@ document.getElementById('btn-send-chat').addEventListener('click', () => {
         senderName: state.user.name,
         senderAvatar: state.user.avatar,
         isVerified: state.user.isVerified,
+        badgeType: state.user.badgeType,
         recipient: activeChatUser,
         text: text,
         ts: Date.now(),
@@ -697,13 +812,14 @@ document.getElementById('btn-send-chat').addEventListener('click', () => {
 document.getElementById('chat-upload-image').addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (file && activeChatUser) {
-        compressImage(file, 800, 800, (base64) => {
+        compressImage(file, 500, 500, (base64) => {
             const newMsg = {
                 id: Date.now().toString(),
                 sender: state.user.handle,
                 senderName: state.user.name,
                 senderAvatar: state.user.avatar,
                 isVerified: state.user.isVerified,
+                badgeType: state.user.badgeType,
                 recipient: activeChatUser,
                 text: '📷 عکس ارسال شد',
                 image: base64,
@@ -713,19 +829,18 @@ document.getElementById('chat-upload-image').addEventListener('change', (e) => {
             state.directMessages.push(newMsg);
             save();
             openChat(activeChatUser);
-        });
+        }, null, 0.75);
     }
 });
 
 // ========================
-// توابع انتخاب اکانت برای نوشتن
+// توابع انتخاب اکانت
 // ========================
 function updateComposeUI() {
     if (!composeSelectedAccount) return;
     document.getElementById('compose-avatar').src = composeSelectedAccount.avatar || DEFAULT_AVATAR;
-    
-    const tickHTML = composeSelectedAccount.isVerified ? `<img src="blue-tick.png" class="verified-icon" style="width: 20px; height: 20px; margin-right: 0px; vertical-align: middle;">` : '';
-    document.getElementById('compose-account-name').innerHTML = `${parseAll(composeSelectedAccount.name)}${tickHTML}`;
+    const badgeHTML = getBadgeHTML(composeSelectedAccount.badgeType);
+    document.getElementById('compose-account-name').innerHTML = `${parseAll(composeSelectedAccount.name)}${badgeHTML}`;
     document.getElementById('compose-account-handle').textContent = composeSelectedAccount.handle;
 }
 
@@ -740,7 +855,7 @@ function openComposeAccountSelector() {
             <div class="account-info">
                 <img src="${u.avatar || DEFAULT_AVATAR}" class="account-avatar">
                 <div class="account-details">
-                    <span class="account-name">${parseAll(u.name)}${u.isVerified ? `<img src="blue-tick.png" class="verified-icon">` : ''}</span>
+                    <span class="account-name">${parseAll(u.name)}${getBadgeHTML(u.badgeType)}</span>
                     <span class="account-handle">${u.handle}</span>
                 </div>
             </div>
@@ -752,11 +867,8 @@ function openComposeAccountSelector() {
 }
 
 function selectComposeAccount(handle) {
-    if (handle === state.user.handle) {
-        composeSelectedAccount = state.user;
-    } else {
-        composeSelectedAccount = (state.accounts || []).find(a => a.handle === handle);
-    }
+    if (handle === state.user.handle) composeSelectedAccount = state.user;
+    else composeSelectedAccount = (state.accounts || []).find(a => a.handle === handle);
     updateComposeUI();
     document.getElementById('compose-account-modal').classList.remove('show');
 }
@@ -784,7 +896,15 @@ function openPostOptions(e, id) {
             menuHTML += `<div class="post-option-item" onclick="removeWarnSender('${post.id}')"><svg><use href="#i-close"/></svg> لغو اخطار دهنده</div>`;
         }
     } else {
-        if (!post.isVerified) menuHTML += `<div class="post-option-item" onclick="giveBlueTick('${post.id}')"><svg><use href="#i-check"/></svg> دادن تیک آبی</div>`;
+        if (!post.badgeType) {
+            menuHTML += `<div class="post-option-item" onclick="giveBadge('${post.id}', 'blue')">${getBadgeHTML('blue')} دادن نشان افراد سرشناس</div>`;
+            menuHTML += `<div class="post-option-item" onclick="giveBadge('${post.id}', 'yellow')">${getBadgeHTML('yellow')} دادن نشان سازمانی</div>`;
+            menuHTML += `<div class="post-option-item" onclick="giveBadge('${post.id}', 'green')">${getBadgeHTML('green')} دادن نشان تجاری</div>`;
+            menuHTML += `<div class="post-option-item" onclick="giveBadge('${post.id}', 'personal')">${getBadgeHTML('personal')} دادن نشان شخصی</div>`;
+        } else {
+            menuHTML += `<div class="post-option-item" onclick="removeBadge('${post.id}')">${getBadgeHTML(post.badgeType)} حذف نشان فعلی</div>`;
+        }
+        
         menuHTML += `<div class="post-option-item danger" onclick="deletePost('${post.id}')"><svg><use href="#i-trash"/></svg> حذف ویراست</div>`;
         menuHTML += `<div class="post-option-item" onclick="openWarnModal('${post.id}')"><svg><use href="#i-alert"/></svg> اخطار به ارسال کننده</div>`;
         if (!isWarnSender) {
@@ -835,27 +955,49 @@ function editPost(id) {
     editingPostId = id;
     composeSelectedAccount = state.user; 
     updateComposeUI();
-    
     document.getElementById('compose-account-selector').style.pointerEvents = 'none';
 
     document.getElementById('compose-modal-title').textContent = 'ویرایش ویراست';
     document.getElementById('compose-text').value = post.text;
-    updateComposeHighlight(); // آپدیت لایه نمایش ایموجی‌ها در ویرایش
+    updateComposeHighlight();
     document.getElementById('compose-poll-container').style.display = 'none';
     document.getElementById('compose-image-preview').style.display = 'none';
     document.getElementById('compose-modal').classList.add('show');
 }
 
-function giveBlueTick(id) {
+function giveBadge(id, badgeType) {
     closePostOptions();
     const post = [...state.posts, ...state.aiPosts].find(p => p.id == id);
     if (!post) return;
-    state.posts.forEach(p => { if (p.handle === post.handle) p.isVerified = true; });
-    state.aiPosts.forEach(p => { if (p.handle === post.handle) p.isVerified = true; });
-    if (state.user.handle === post.handle) state.user.isVerified = true;
-    const acc = state.accounts.find(a => a.handle === post.handle);
-    if (acc) acc.isVerified = true;
+    
+    const badgeInfo = BADGE_TYPES[badgeType];
+    const handle = post.handle;
+    
+    state.posts.forEach(p => { if (p.handle === handle) { p.isVerified = true; p.badgeType = badgeType; } });
+    state.aiPosts.forEach(p => { if (p.handle === handle) { p.isVerified = true; p.badgeType = badgeType; } });
+    if (state.user.handle === handle) { state.user.isVerified = true; state.user.badgeType = badgeType; }
+    const acc = state.accounts.find(a => a.handle === handle);
+    if (acc) { acc.isVerified = true; acc.badgeType = badgeType; }
+    
     save(); renderFeeds(); renderProfile();
+    showToast(`نشان "${badgeInfo.title}" به ${post.author} داده شد.`, 'success');
+}
+
+function removeBadge(id) {
+    closePostOptions();
+    const post = [...state.posts, ...state.aiPosts].find(p => p.id == id);
+    if (!post) return;
+    
+    const handle = post.handle;
+    
+    state.posts.forEach(p => { if (p.handle === handle) { p.isVerified = false; p.badgeType = null; } });
+    state.aiPosts.forEach(p => { if (p.handle === handle) { p.isVerified = false; p.badgeType = null; } });
+    if (state.user.handle === handle) { state.user.isVerified = false; state.user.badgeType = null; }
+    const acc = state.accounts.find(a => a.handle === handle);
+    if (acc) { acc.isVerified = false; acc.badgeType = null; }
+    
+    save(); renderFeeds(); renderProfile();
+    showToast(`نشان ${post.author} حذف شد.`, 'info');
 }
 
 function deletePost(id) {
@@ -879,9 +1021,7 @@ document.getElementById('btn-submit-warn').addEventListener('click', () => {
     const post = [...state.posts, ...state.aiPosts].find(p => p.id == currentWarnPostId);
     if (post) {
         const preview = post.text.length > 30 ? post.text.substring(0, 30) + '...' : post.text;
-        
         const senderInfo = getAccountInfo(state.warnSenderAccount);
-
         const msgText = `کاربر محترم ${post.author}\n\nویراست شما:\n"${preview}"\n\nبه دلیل "${reason}" اخطار دریافت کرد. در رعایت قوانین کوشا باشید.`;
 
         const newDM = {
@@ -890,6 +1030,7 @@ document.getElementById('btn-submit-warn').addEventListener('click', () => {
             senderName: senderInfo.name,
             senderAvatar: senderInfo.avatar, 
             isVerified: senderInfo.isVerified,
+            badgeType: senderInfo.badgeType,
             recipient: post.handle,
             text: msgText,
             ts: Date.now(),
@@ -934,7 +1075,7 @@ function openNewChatModal() {
                 <div class="new-chat-user" onclick="openChat('${handle}'); document.getElementById('new-chat-modal').classList.remove('show');">
                     <img src="${u.avatar}">
                     <div class="new-chat-user-info">
-                        <span class="new-chat-user-name">${u.name}${u.isVerified ? `<img src="blue-tick.png" style="width:12px;height:12px;vertical-align:middle;margin-right:2px;">` : ''}</span>
+                        <span class="new-chat-user-name">${u.name}${getBadgeHTML(u.badgeType)}</span>
                         <span class="new-chat-user-handle">${u.handle}</span>
                     </div>
                 </div>
@@ -950,10 +1091,7 @@ document.getElementById('new-chat-search').addEventListener('input', (e) => {
     const query = e.target.value.trim().toLowerCase();
     const container = document.getElementById('new-chat-list');
     
-    if (!query) {
-        openNewChatModal();
-        return;
-    }
+    if (!query) { openNewChatModal(); return; }
     
     const allHandles = new Set([...state.posts.map(p => p.handle), ...state.accounts.map(a => a.handle), ...state.user.followedUsers]);
     const results = [...allHandles].filter(h => h.toLowerCase().includes(query));
@@ -968,7 +1106,7 @@ document.getElementById('new-chat-search').addEventListener('input', (e) => {
                 <div class="new-chat-user" onclick="openChat('${handle}'); document.getElementById('new-chat-modal').classList.remove('show');">
                     <img src="${u.avatar}">
                     <div class="new-chat-user-info">
-                        <span class="new-chat-user-name">${u.name}${u.isVerified ? `<img src="blue-tick.png" style="width:12px;height:12px;vertical-align:middle;margin-right:2px;">` : ''}</span>
+                        <span class="new-chat-user-name">${u.name}${getBadgeHTML(u.badgeType)}</span>
                         <span class="new-chat-user-handle">${u.handle}</span>
                     </div>
                 </div>
@@ -981,7 +1119,6 @@ document.getElementById('new-chat-search').addEventListener('input', (e) => {
 function startNewChat() {
     const query = document.getElementById('new-chat-search').value.trim().replace(/@/g, '');
     if (!query) return;
-    
     const handle = '@' + query;
     document.getElementById('new-chat-modal').classList.remove('show');
     openChat(handle);
@@ -996,7 +1133,7 @@ function renderAccountList() {
             <div class="account-info">
                 <img src="${u.avatar || DEFAULT_AVATAR}" class="account-avatar">
                 <div class="account-details">
-                    <span class="account-name">${parseAll(u.name)}${u.isVerified ? `<img src="blue-tick.png" class="verified-icon">` : ''}</span>
+                    <span class="account-name">${parseAll(u.name)}${getBadgeHTML(u.badgeType)}</span>
                     <span class="account-handle">${u.handle}</span>
                 </div>
             </div>
@@ -1013,7 +1150,8 @@ function switchAccount(handle) {
     const newUser = state.accounts.find(a => a.handle === handle);
     if (newUser) {
         state.user = newUser;
-        save(); renderProfile(); renderFeeds(); renderAccountList(); switchView('home'); 
+        saveNow();
+        renderProfile(); renderFeeds(); renderAccountList(); switchView('home'); 
     }
 }
 
@@ -1082,12 +1220,12 @@ function toggleAction(e, id, type) {
     if (!post) return;
     if (type === 'like') {
         post.liked = !post.liked;
-        let cl = parseInt(post.stats.likes.replace(/,/g, '').replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))) || 0;
-        post.stats.likes = Math.max(0, cl + (post.liked ? 1 : -1)).toLocaleString('fa-IR');
+        const currentLikes = parseStatNum(post.stats.likes);
+        post.stats.likes = faNum(currentLikes + (post.liked ? 1 : -1));
     } else if (type === 'retweet') {
         post.retweeted = !post.retweeted;
-        let cr = parseInt(post.stats.retweets.replace(/,/g, '').replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))) || 0;
-        post.stats.retweets = Math.max(0, cr + (post.retweeted ? 1 : -1)).toLocaleString('fa-IR');
+        const currentRetweets = parseStatNum(post.stats.retweets);
+        post.stats.retweets = faNum(currentRetweets + (post.retweeted ? 1 : -1));
     } else if (type === 'bookmark') {
         post.bookmarked = !post.bookmarked;
     }
@@ -1171,15 +1309,13 @@ function renderProfile() {
     const avEl = document.getElementById('profile-avatar');
     if(avEl) avEl.innerHTML = `<img src="${u.avatar || DEFAULT_AVATAR}" alt="Avatar">`;
     
-    const verifiedIcon = u.isVerified ? `<img src="blue-tick.png" class="verified-icon lg" alt="verified">` : '';
-    
     const nameEl = document.getElementById('profile-name');
-    if(nameEl) nameEl.innerHTML = `${parseAll(u.name)}${verifiedIcon}`;
+    if(nameEl) nameEl.innerHTML = `${parseAll(u.name)}${getBadgeHTML(u.badgeType, 'lg')}`;
     if(document.getElementById('profile-handle')) document.getElementById('profile-handle').textContent = u.handle;
     if(document.getElementById('profile-bio')) document.getElementById('profile-bio').innerHTML = parseAll(u.bio);
     if(document.getElementById('profile-followers')) document.getElementById('profile-followers').textContent = (u.followers || 0).toLocaleString('fa-IR');
     if(document.getElementById('profile-following')) document.getElementById('profile-following').textContent = (u.following || 0).toLocaleString('fa-IR');
-    if(document.getElementById('profile-joined-text')) document.getElementById('profile-joined-text').textContent = u.joinedDate || 'نامشخص';
+    if(document.getElementById('profile-joined-text')) document.getElementById('profile-joined-text').textContent = u.joinedDate || getCurrentPersianDate();
     
     const hAvEl = document.getElementById('header-avatar');
     if(hAvEl) hAvEl.src = u.avatar || DEFAULT_AVATAR;
@@ -1196,7 +1332,7 @@ function renderPostDetail(id) {
     const post = [...state.posts, ...state.aiPosts].find(p => p.id == id);
     if (!post) return;
     const timeStr = post.ts ? formatTimeAgo(post.ts) : (post.time || 'همین حالا');
-    const verifiedIcon = post.isVerified ? `<img src="blue-tick.png" class="verified-icon lg" alt="verified">` : '';
+    const verifiedIcon = getBadgeHTML(post.badgeType, 'lg');
 
     let pollHTML = '';
     if (post.poll) {
@@ -1262,12 +1398,11 @@ document.getElementById('btn-compose').addEventListener('click', () => {
     editingPostId = null;
     composeSelectedAccount = state.user;
     updateComposeUI();
-    
     document.getElementById('compose-account-selector').style.pointerEvents = 'auto';
 
     document.getElementById('compose-modal-title').textContent = 'نوشتن ویراست';
     document.getElementById('compose-text').value = '';
-    updateComposeHighlight(); // پاک کردن پیش‌نمایش قبلی
+    updateComposeHighlight();
     document.getElementById('compose-image-preview').style.display = 'none';
     
     document.getElementById('compose-poll-container').style.display = 'none';
@@ -1328,15 +1463,25 @@ function compressImage(file, maxWidth, maxHeight, callback, cropRatio = null, qu
 document.addEventListener('change', (e) => {
     if (e.target && e.target.id === 'upload-image') {
         const file = e.target.files[0];
-        if (file) compressImage(file, 800, 800, (base64) => { tempPostImage = base64; document.getElementById('preview-img').src = base64; document.getElementById('compose-image-preview').style.display = 'block'; });
+        if (file) compressImage(file, 600, 600, (base64) => { 
+            tempPostImage = base64; 
+            document.getElementById('preview-img').src = base64; 
+            document.getElementById('compose-image-preview').style.display = 'block'; 
+        }, null, 0.75);
     }
     if (e.target && e.target.id === 'upload-avatar') {
         const file = e.target.files[0];
-        if (file) compressImage(file, 400, 400, (base64) => { tempAvatar = base64; document.getElementById('edit-avatar-preview').innerHTML = `<img src="${base64}" alt="Avatar"><label for="upload-avatar" class="edit-avatar-btn"><svg><use href="#i-image"/></svg></label><input type="file" id="upload-avatar" accept="image/*" hidden>`; }, 1.0); 
+        if (file) compressImage(file, 200, 200, (base64) => { 
+            tempAvatar = base64; 
+            document.getElementById('edit-avatar-preview').innerHTML = `<img src="${base64}" alt="Avatar"><label for="upload-avatar" class="edit-avatar-btn"><svg><use href="#i-image"/></svg></label><input type="file" id="upload-avatar" accept="image/*" hidden>`; 
+        }, 1.0, 0.7); 
     }
     if (e.target && e.target.id === 'upload-cover') {
         const file = e.target.files[0];
-        if (file) compressImage(file, 1920, 1080, (base64) => { tempCover = base64; document.getElementById('edit-cover-preview').style.backgroundImage = `url('${base64}')`; }, null, 0.92); 
+        if (file) compressImage(file, 1000, 500, (base64) => { 
+            tempCover = base64; 
+            document.getElementById('edit-cover-preview').style.backgroundImage = `url('${base64}')`; 
+        }, 2.0, 0.7); 
     }
 });
 
@@ -1345,11 +1490,13 @@ document.getElementById('btn-submit-post').addEventListener('click', () => {
     
     if (editingPostId) {
         const post = state.posts.find(p => p.id === editingPostId);
-        if (post) { post.text = text; save(); renderFeeds(); }
+        if (post) { post.text = text; saveNow(); renderFeeds(); }
         editingPostId = null;
         document.getElementById('compose-modal').classList.remove('show');
         return;
     }
+
+    const authorAccount = composeSelectedAccount || state.user;
 
     let pollData = null;
     if (isPollMode) {
@@ -1358,13 +1505,16 @@ document.getElementById('btn-submit-post').addEventListener('click', () => {
         const options = [];
         optionInputs.forEach(input => { const val = input.value.trim(); if (val) options.push({ text: val, votes: 0 }); });
         if (!question || options.length < 2) { showToast('سوال و حداقل ۲ گزینه وارد کنید.', 'error'); return; }
-        pollData = { question, options, votedIndex: null };
+        pollData = { 
+            question, options, votedIndex: null,
+            aiVoters: {},
+            maxVotes: Math.max(5, Math.floor((authorAccount.followers || 100) * 1.1))
+        };
     }
 
     if (!text && !tempPostImage && !pollData) return;
     
-    const authorAccount = composeSelectedAccount || state.user;
-    const newStats = generateStats(authorAccount.followers || 100);
+    const newStats = generateStats(authorAccount.followers || 100, 0);
     
     const newPost = {
         id: Date.now().toString(), 
@@ -1372,19 +1522,17 @@ document.getElementById('btn-submit-post').addEventListener('click', () => {
         handle: authorAccount.handle,
         avatar: authorAccount.avatar || DEFAULT_AVATAR, 
         isVerified: authorAccount.isVerified,
+        badgeType: authorAccount.badgeType,
         ts: Date.now(), 
         text, 
         image: tempPostImage, 
         poll: pollData, 
         stats: newStats,
-        myReaction: null, 
-        liked: false, 
-        retweeted: false, 
-        bookmarked: false
+        myReaction: null, liked: false, retweeted: false, bookmarked: false
     };
     
     state.posts.unshift(newPost);
-    save();
+    saveNow();
     tempPostImage = null;
     document.getElementById('compose-modal').classList.remove('show');
     switchView('home');
@@ -1400,8 +1548,8 @@ document.getElementById('btn-edit-profile').addEventListener('click', (e) => {
     document.getElementById('edit-followers').value = u.followers || 0;
     document.getElementById('edit-username').value = (u.handle || '').replace('@', '');
     document.getElementById('edit-following').value = u.following || 0;
-    document.getElementById('edit-joined').value = u.joinedDate || '';
-    document.getElementById('edit-verified').checked = u.isVerified || false;
+    document.getElementById('edit-joined').value = u.joinedDate || getCurrentPersianDate();
+    document.getElementById('edit-badge-type').value = u.badgeType || '';
     
     document.getElementById('edit-cover-preview').style.backgroundImage = `url('${u.header || DEFAULT_HEADER}')`;
     document.getElementById('edit-avatar-preview').innerHTML = `<img src="${u.avatar || DEFAULT_AVATAR}" alt="Avatar"><label for="upload-avatar" class="edit-avatar-btn"><svg><use href="#i-image"/></svg></label><input type="file" id="upload-avatar" accept="image/*" hidden>`;
@@ -1425,29 +1573,44 @@ document.querySelectorAll('.ptab').forEach(tab => {
 });
 
 document.getElementById('btn-save-profile').addEventListener('click', (e) => {
-    e.preventDefault(); e.stopPropagation();
+    e.preventDefault(); 
+    e.stopPropagation();
+
+    const oldHandle = state.user.handle;
+
     const newName = document.getElementById('edit-name').value.trim();
     const newBio = document.getElementById('edit-bio').value.trim();
     if (newName) state.user.name = newName;
     state.user.bio = newBio;
     state.user.followers = parseInt(document.getElementById('edit-followers').value) || 0;
     state.user.following = parseInt(document.getElementById('edit-following').value) || 0;
-    state.user.joinedDate = document.getElementById('edit-joined').value.trim() || 'نامشخص';
-    state.user.isVerified = document.getElementById('edit-verified').checked;
+    state.user.joinedDate = document.getElementById('edit-joined').value.trim() || getCurrentPersianDate();
     
+    const badgeType = document.getElementById('edit-badge-type').value;
+    state.user.badgeType = badgeType || null;
+    state.user.isVerified = !!badgeType;
+
     const newUsernameInput = document.getElementById('edit-username').value.trim();
     if (newUsernameInput) {
         const cleanUsername = newUsernameInput.replace(/@/g, '').replace(/\s+/g, '');
         state.user.handle = '@' + cleanUsername;
     }
+
+    if (oldHandle !== state.user.handle) {
+        state.accounts = state.accounts.filter(a => a.handle !== oldHandle);
+    }
+
     if (tempAvatar) state.user.avatar = tempAvatar;
     if (tempCover) state.user.header = tempCover;
-    
-    save(); renderProfile(); renderFeeds(); 
+
+    saveNow();
+    renderProfile(); renderFeeds(); renderAccountList();
     document.getElementById('edit-profile-modal').classList.remove('show');
-    tempAvatar = null; tempCover = null;
+    tempAvatar = null; 
+    tempCover = null;
 });
 
+// ✅ هنگام ساخت اکانت جدید، تاریخ عضویت = تاریخ امروز
 document.getElementById('btn-create-account').addEventListener('click', () => {
     const name = document.getElementById('new-account-name').value.trim();
     const handleInput = document.getElementById('new-account-handle').value.trim();
@@ -1466,9 +1629,10 @@ document.getElementById('btn-create-account').addEventListener('click', () => {
     }
     
     const newUser = {
-        name, handle, bio: 'به Virasty خوش آمدید!', joinedDate: 'فروردین ۱۴۰۳',
-        followers: 0, following: 0, avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff&size=400`,
-        header: DEFAULT_HEADER, isVerified: false, followedUsers: []
+        name, handle, bio: 'به Virasty خوش آمدید!', 
+        joinedDate: getCurrentPersianDate(),
+        followers: 100, following: 0, avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff&size=400`,
+        header: DEFAULT_HEADER, isVerified: false, badgeType: null, followedUsers: []
     };
     
     const existingIdx = (state.accounts || []).findIndex(a => a.handle === state.user.handle);
@@ -1477,36 +1641,192 @@ document.getElementById('btn-create-account').addEventListener('click', () => {
     else state.accounts.push(state.user);
     
     state.user = newUser;
-    save(); renderProfile(); renderFeeds(); renderAccountList();
+    saveNow();
+    renderProfile(); renderFeeds(); renderAccountList();
     document.getElementById('add-account-modal').classList.remove('show');
     document.getElementById('new-account-name').value = '';
     document.getElementById('new-account-handle').value = '';
     switchView('home');
 });
 
-function generateStats(followers) {
-    const views = Math.floor(followers * 1.1) + Math.floor(Math.random() * 20);
-    const likes = Math.floor(views * (0.05 + Math.random() * 0.1));
-    const retweets = Math.floor(likes * (0.1 + Math.random() * 0.2));
-    const replies = Math.floor(retweets * (0.2 + Math.random() * 0.3));
+// ========================
+// ساخت آمار اولیه
+// ========================
+function generateStats(followers, ageMs = 0) {
+    const f = Math.max(20, followers || 100);
+    const cap = Math.max(10, Math.floor(f * 1.1));
+
+    const progress = Math.min(1, Math.max(0, ageMs / (8 * 60 * 60 * 1000)));
+    const initialFactor = progress * (0.3 + Math.random() * 0.4);
+
+    const views = Math.floor(cap * initialFactor);
+    const likes = Math.floor(cap * initialFactor);
+    const retweets = Math.floor(cap * initialFactor);
+    const replies = Math.floor(cap * initialFactor);
+    const reactionsTotal = Math.floor(cap * initialFactor);
+
     const reactions = {};
-    if (likes > 0) {
+    if (reactionsTotal > 0) {
         const emojis = ['❤️', '👍', '😂', '🔥', '😮'];
-        const shuffled = emojis.sort(() => 0.5 - Math.random());
-        reactions[shuffled[0]] = Math.floor(likes * 0.6);
-        if (likes > 5) reactions[shuffled[1]] = Math.floor(likes * 0.3);
-        if (likes > 20) reactions[shuffled[2]] = Math.floor(likes * 0.1);
+        const shuffled = [...emojis].sort(() => Math.random() - 0.5);
+        let remaining = reactionsTotal;
+        const r1 = Math.floor(remaining * 0.5); reactions[shuffled[0]] = r1; remaining -= r1;
+        const r2 = Math.floor(remaining * 0.6); reactions[shuffled[1]] = r2; remaining -= r2;
+        if (remaining > 0) reactions[shuffled[2]] = remaining;
     }
+
     return {
-        views: views.toLocaleString('fa-IR'), likes: likes.toLocaleString('fa-IR'),
-        retweets: retweets.toLocaleString('fa-IR'), replies: replies.toLocaleString('fa-IR'), reactions
+        views: faNum(views), likes: faNum(likes), retweets: faNum(retweets), replies: faNum(replies),
+        reactions,
+        _target: { viewsMax: cap, likesMax: cap, retweetsMax: cap, repliesMax: cap, reactionsMax: cap }
     };
 }
 
+// ========================
+// شبیه‌ساز رشد آمار
+// ========================
+function startStatsGrowthSimulation() {
+    setInterval(() => {
+        let changed = false;
+        const allPosts = [...state.posts, ...state.aiPosts];
+        const now = Date.now();
+
+        allPosts.forEach(post => {
+            if (!post.stats) return;
+            if (!post.stats._target) {
+                const followers = (getAccountInfo(post.handle).followers || 100);
+                const age = Math.max(0, now - (post.ts || now));
+                post.stats._target = generateStats(followers, age)._target;
+            }
+            const t = post.stats._target;
+
+            const cv = parseStatNum(post.stats.views);
+            if (cv < t.viewsMax) {
+                const step = Math.max(1, Math.ceil((t.viewsMax - cv) * 0.04 * (0.7 + Math.random() * 0.6)));
+                post.stats.views = faNum(Math.min(t.viewsMax, cv + step));
+                changed = true;
+            }
+            if (Math.random() < 0.55) {
+                const cl = parseStatNum(post.stats.likes);
+                if (cl < t.likesMax) {
+                    const step = Math.max(1, Math.ceil((t.likesMax - cl) * 0.04 * (0.7 + Math.random() * 0.6)));
+                    post.stats.likes = faNum(Math.min(t.likesMax, cl + step));
+                    changed = true;
+                }
+            }
+            if (Math.random() < 0.35) {
+                const cr = parseStatNum(post.stats.retweets);
+                if (cr < t.retweetsMax) {
+                    const step = Math.max(1, Math.ceil((t.retweetsMax - cr) * 0.04 * (0.7 + Math.random() * 0.6)));
+                    post.stats.retweets = faNum(Math.min(t.retweetsMax, cr + step));
+                    changed = true;
+                }
+            }
+            if (Math.random() < 0.25) {
+                const crep = parseStatNum(post.stats.replies);
+                if (crep < t.repliesMax) {
+                    const step = Math.max(1, Math.ceil((t.repliesMax - crep) * 0.04 * (0.7 + Math.random() * 0.6)));
+                    post.stats.replies = faNum(Math.min(t.repliesMax, crep + step));
+                    changed = true;
+                }
+            }
+            if (Math.random() < 0.5) {
+                if (!post.stats.reactions) post.stats.reactions = {};
+                const curTotal = Object.values(post.stats.reactions).reduce((s, n) => s + (Number(n) || 0), 0);
+                if (curTotal < t.reactionsMax) {
+                    const emojis = ['❤️', '👍', '😂', '🔥', '😮'];
+                    const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+                    const step = Math.max(1, Math.ceil((t.reactionsMax - curTotal) * 0.04));
+                    post.stats.reactions[emoji] = (Number(post.stats.reactions[emoji]) || 0) + step;
+                    changed = true;
+                }
+            }
+        });
+
+        if (changed) { save(); renderFeeds(); }
+    }, 5000);
+}
+
+// ========================
+// شبیه‌ساز رای AI در نظرسنجی‌ها
+// ========================
+function startPollVotingSimulation() {
+    setInterval(() => {
+        let changed = false;
+        const allPosts = [...state.posts, ...state.aiPosts];
+        const now = Date.now();
+
+        allPosts.forEach(post => {
+            if (!post.poll) return;
+            if (!post.poll.aiVoters) post.poll.aiVoters = {};
+            if (!post.poll.maxVotes) {
+                const followers = getAccountInfo(post.handle).followers || 100;
+                post.poll.maxVotes = Math.max(5, Math.floor(followers * 1.1));
+            }
+
+            const currentTotal = post.poll.options.reduce((s, o) => s + o.votes, 0);
+            if (currentTotal >= post.poll.maxVotes) return;
+
+            const ageMin = (now - (post.ts || now)) / 60000;
+            const chance = Math.min(0.6, 0.15 + ageMin * 0.003);
+            if (Math.random() > chance) return;
+
+            const remaining = post.poll.maxVotes - currentTotal;
+            const step = Math.max(1, Math.ceil(remaining * 0.03 * (0.5 + Math.random())));
+
+            const voters = getAvailableAIVoters().filter(h => post.poll.aiVoters[h] === undefined);
+
+            if (voters.length > 0) {
+                const shuffled = [...voters].sort(() => Math.random() - 0.5);
+                const count = Math.min(step, shuffled.length);
+                for (let i = 0; i < count; i++) {
+                    const handle = shuffled[i];
+                    const optIdx = Math.floor(Math.random() * post.poll.options.length);
+                    post.poll.options[optIdx].votes += 1;
+                    post.poll.aiVoters[handle] = optIdx;
+                }
+                const stillNeed = Math.min(step - count, post.poll.maxVotes - (currentTotal + count));
+                for (let i = 0; i < stillNeed; i++) {
+                    const optIdx = Math.floor(Math.random() * post.poll.options.length);
+                    post.poll.options[optIdx].votes += 1;
+                }
+            } else {
+                const count = Math.min(step, remaining);
+                for (let i = 0; i < count; i++) {
+                    const optIdx = Math.floor(Math.random() * post.poll.options.length);
+                    post.poll.options[optIdx].votes += 1;
+                }
+            }
+            changed = true;
+        });
+
+        if (changed) { save(); renderFeeds(); }
+    }, 8000);
+}
+
+// ========================
+// ذخیره‌ی اضطراری
+// ========================
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') saveNow();
+});
+window.addEventListener('pagehide', saveNow);
+window.addEventListener('beforeunload', saveNow);
+
 document.addEventListener('DOMContentLoaded', () => {
-    initEmojiData(); renderFeeds(); renderProfile(); switchHomeTab('following'); checkForUpdate(); startAIModerationSimulation();
-    
-    // اتصال رویدادها برای آپدیت لایو ایموجی‌ها در باکس تایپ
+    renderFeeds();
+    renderProfile();
+    switchHomeTab('following');
+    checkForUpdate();
+    startAIModerationSimulation();
+    startStatsGrowthSimulation();
+    startPollVotingSimulation();
+
+    const versionEl = document.getElementById('settings-version');
+    if (versionEl) versionEl.textContent = APP_VERSION;
+
+    sessionStorage.removeItem('update_check_pending');
+
     document.getElementById('compose-text').addEventListener('input', updateComposeHighlight);
     document.getElementById('compose-text').addEventListener('scroll', function() {
         document.getElementById('compose-highlight').scrollTop = this.scrollTop;
