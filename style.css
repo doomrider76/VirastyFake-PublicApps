@@ -185,6 +185,9 @@ svg { width: 24px; height: 24px; }
 /* ✅ کوچک‌کردن بصری زرد/سبز/شخصی برای هم‌اندازه شدن با آبی */
 .verified-icon[src*="yellow-tick"],
 .verified-icon[src*="green-tick"],
+.verified-icon[src*="personal-tick"] { top: 3px; }
+.verified-icon[src*="yellow-tick"],
+.verified-icon[src*="green-tick"],
 .verified-icon[src*="personal-tick"] {
     transform: scale(0.85);
     transform-origin: center;
@@ -270,7 +273,7 @@ svg { width: 24px; height: 24px; }
 .action-btn.bookmarked { color: var(--accent-color); }
 .action-btn.bookmarked svg { fill: var(--accent-color); stroke: var(--accent-color); }
 
-.cover-photo { height: 180px; background-size: cover; background-position: center; background-color: #0d151c; position: relative; border-radius: 0; overflow: hidden; }
+.cover-photo { aspect-ratio: 2 / 1; height: auto; background-size: cover; background-position: center; background-color: #0d151c; position: relative; border-radius: 0; overflow: hidden; }
 .back-btn { position: absolute; top: calc(var(--top-gap) + 4px); right: 16px; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); color: white; z-index: 2; }
 .profile-actions-row { display: flex; justify-content: space-between; align-items: flex-end; padding: 0 16px; margin-top: 0; position: relative; min-height: 60px; }
 .profile-avatar { width: 84px; height: 84px; border-radius: 40%; border: 4px solid var(--bg-color); background: var(--bg-color); overflow: hidden; margin-top: -46px; }
@@ -427,7 +430,7 @@ svg { width: 24px; height: 24px; }
 .compose-footer { padding: 12px 16px; border-top: 1px solid var(--border-color); display: flex; background-color: var(--bg-color); }
 
 .edit-profile-body { overflow-y: auto; max-height: 70vh; background-color: var(--bg-color); }
-.edit-cover { height: 150px; background-size: cover; background-position: center; position: relative; background-color: var(--bg-color); border-bottom: 1px solid var(--border-color); }
+.edit-cover { aspect-ratio: 2 / 1; height: auto; background-size: cover; background-position: center; position: relative; background-color: var(--bg-color); border-bottom: 1px solid var(--border-color); }
 .edit-cover-btn, .edit-avatar-btn { position: absolute; background: rgba(0,0,0,0.6); border-radius: 50%; padding: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .edit-cover-btn { top: 50%; left: 50%; transform: translate(-50%, -50%); }
 .edit-avatar-wrap { padding: 0 16px; margin-top: -40px; position: relative; }
@@ -818,7 +821,7 @@ button.set-row:active { background: var(--w05); }
     -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
 }
 /* ℹ️ باکس توضیحات نشان‌ها در پروفایل */
-.profile-name .verified-icon { cursor: pointer; }
+.profile-name .verified-icon, #compose-account-name .verified-icon { cursor: pointer; }
 .badge-info-content { max-width: 420px; }
 .badge-info-body { padding: 16px 18px 18px; text-align: right; }
 .badge-info-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
@@ -919,3 +922,11 @@ button.set-row:active { background: var(--w05); }
     backdrop-filter: blur(22px) saturate(180%);
     -webkit-backdrop-filter: blur(22px) saturate(180%);
 }
+
+/* 🖼️ کاور: عکس کامل و بدون برش، با پس‌زمینه‌ی محوِ همان عکس برای فضای خالی */
+.cover-photo::before, .cover-photo::after, .edit-cover::before, .edit-cover::after {
+    content: ''; position: absolute; inset: 0; background-image: inherit; background-position: center; pointer-events: none;
+}
+.cover-photo::before, .edit-cover::before { background-size: cover; filter: blur(18px) brightness(.75); transform: scale(1.2); }
+.cover-photo::after, .edit-cover::after { background-size: contain; background-repeat: no-repeat; }
+.back-btn, .edit-cover-btn { z-index: 2; }
