@@ -1,4 +1,4 @@
-const CACHE_NAME = 'VirastyApps-v1.0.3'; 
+const CACHE_NAME = 'VirastyApps-v1.0.2'; 
 
 const ASSETS = [
   './',
