@@ -233,11 +233,18 @@ function lastLetterBeforeBadge(img) {
 // بالا/پایین‌کردن همه‌ی تیک‌ها و ستاره‌ها با هم (پیکسل). مثبت = بالاتر، منفی = پایین‌تر
 const BADGE_LIFT_PX = 8;
 const BADGE_REF_YA = -.10; // وسط «ی» (تأییدشده)؛ بقیه‌ی حرف‌ها نسبت به آن از روی شکل واقعی فونت حساب می‌شوند
+// پایین‌آوردن اضافه‌ی هر نشان (پیکسل). مثبت = پایین‌تر، منفی = بالاتر. فقط همین عددها را کم‌وزیاد کنید.
+const BADGE_EXTRA_DOWN_PX = { "blue-tick": 0, "vip": 0, "yellow-tick": 3, "green-tick": 3, "personal-tick": 3 };
+// جای ثابت نشان برای همه‌ی اسم‌ها: عدد بزرگ‌تر = نشان بالاتر، کوچک‌تر = پایین‌تر (هر 0.1 حدود 1.6 پیکسل)
+const BADGE_FIXED_CENTER = 0.18;
+const BADGE_FOLLOW_LAST_LETTER = false; // true = جای نشان وابسته به آخرین حرف اسم (رفتار قبلی)
 let _bcCanvas = null;
 function alignBadge(img) {
     const { ch, src } = lastLetterBeforeBadge(img);
-    let c = letterCenterEm(ch);
-    if (c === null) return;
+    // تا حالا جای نشان به شکل «آخرین حرفِ اسم» بستگی داشت؛ برای هر اسمی که با حرف دیگری تمام می‌شد (یا ایموجی/علامت)
+    // بالا و پایین می‌افتاد یا اصلاً تراز نمی‌شد. حالا برای همه‌ی اسم‌ها همان جای تأییدشده‌ی «ی» استفاده می‌شود.
+    let c = BADGE_FOLLOW_LAST_LETTER ? letterCenterEm(ch) : BADGE_FIXED_CENTER;
+    if (c === null) c = BADGE_FIXED_CENTER;
     const holder = (src && src.nodeType === 1) ? src : img.parentElement;
     if (!holder) return;
     const cs = getComputedStyle(holder);
@@ -251,14 +258,21 @@ function alignBadge(img) {
         const m = ctx.measureText('x');
         if (m.fontBoundingBoxAscent) baseBelowCenter = (m.fontBoundingBoxAscent - m.fontBoundingBoxDescent) / 2;
         // وسط واقعیِ شکل حرف در همین فونت (نسبت به «ی» که مرجع تنظیم‌شده است)
-        if (/[\u0600-\u06FF]/.test(ch) && ch !== 'ی') {
+        if (BADGE_FOLLOW_LAST_LETTER && /[\u0600-\u06FF]/.test(ch) && ch !== 'ی') {
             const mc = ctx.measureText(ch), mr = ctx.measureText('ی');
             const cen = x => (x.actualBoundingBoxAscent - x.actualBoundingBoxDescent) / 2;
             const v = BADGE_REF_YA + (cen(mc) - cen(mr)) / fs;
             if (mc.width > 0 && isFinite(v)) c = v;
         }
     } catch (e) {}
-    const nudge = /blue-tick|vip/.test(img.getAttribute('src') || '') ? 3 : 0; // همان تنظیمِ تیک آبی برای سپر ویژه هم اعمال می‌شود
+    // سپر ویژه همیشه هم‌تراز تیکِ کنارش می‌نشیند (کنار آبی مثل آبی، کنار زرد/سبز/شخصی مثل آن‌ها)
+    const badgeKey = el => ((el && el.getAttribute("src")) || "").replace(/\.png.*$/, "");
+    let key = badgeKey(img);
+    if (key === "vip") {
+        const nb = [img.previousElementSibling, img.nextElementSibling].find(e => e && e.classList && e.classList.contains("verified-icon") && badgeKey(e) !== "vip");
+        key = nb ? badgeKey(nb) : "vip";
+    }
+    const nudge = 3 + (BADGE_EXTRA_DOWN_PX[key] || 0);
     const parentDisplay = img.parentElement ? getComputedStyle(img.parentElement).display : '';
     if (parentDisplay.includes('flex')) {
         img.style.top = (baseBelowCenter - c * fs + nudge - BADGE_LIFT_PX).toFixed(2) + 'px';
@@ -1737,10 +1751,10 @@ document.addEventListener('change', (e) => {
     }
     if (e.target && e.target.id === 'upload-cover') {
         const file = e.target.files[0];
-        if (file) compressImage(file, 1000, 500, (base64) => { 
+        if (file) compressImage(file, 1200, 1200, (base64) => { 
             tempCover = base64; 
             document.getElementById('edit-cover-preview').style.backgroundImage = `url('${base64}')`; 
-        }, 2.0, 0.7); 
+        }, null, 0.75); 
     }
 });
 
@@ -2200,9 +2214,10 @@ function openBadgeInfo(key) {
     requestAnimationFrame(() => m.classList.add('show'));
 }
 
-// فقط تیک‌ها و سپرِ کنار نام در بخش پروفایل (پروفایل خودم و پروفایل دیگران)
+// تیک‌ها و سپرِ کنار نام در پروفایل (خودم و دیگران) و در بخش انتخاب اکانت هنگام نوشتن ویراست
+// (فاز capture است تا قبل از onclick والد، یعنی منوی «انتخاب اکانت»، اجرا شود)
 document.addEventListener('click', function (e) {
-    const img = e.target.closest && e.target.closest('.profile-name .verified-icon');
+    const img = e.target.closest && e.target.closest('.profile-name .verified-icon, #compose-account-name .verified-icon');
     if (!img) return;
     const key = badgeKeyFromImg(img);
     if (!key) return;
@@ -2314,4 +2329,40 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeBadgeIn
         }).observe(m, { childList: true });
     };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+
+// ========================
+// 🖼️ کاور پروفایل: نمایش کامل عکس (بدون برش)
+// ========================
+// نسبت قاب کاور از روی خود عکس تنظیم می‌شود (بین 1:1 و 3:1)؛ اگر نسبتش فرق کند، فضای خالی با همان عکسِ محو پر می‌شود.
+(function initCoverFit() {
+    const sel = '.cover-photo, .edit-cover';
+    function fit(el) {
+        const m = /url\(["']?(.*?)["']?\)/.exec(el.style.backgroundImage || '');
+        const url = m && m[1];
+        if (!url || el.dataset.coverUrl === url) return;
+        el.dataset.coverUrl = url;
+        const im = new Image();
+        im.onload = () => {
+            if (el.dataset.coverUrl !== url || !im.naturalWidth || !im.naturalHeight) return;
+            const r = Math.min(3, Math.max(1, im.naturalWidth / im.naturalHeight));
+            el.style.aspectRatio = r.toFixed(3) + ' / 1';
+        };
+        im.src = url;
+    }
+    function scan(node) {
+        if (!node || node.nodeType !== 1) return;
+        if (node.matches(sel)) fit(node);
+        if (node.querySelectorAll) node.querySelectorAll(sel).forEach(fit);
+    }
+    const start = () => {
+        new MutationObserver(muts => {
+            muts.forEach(mu => {
+                if (mu.type === 'attributes') scan(mu.target);
+                else mu.addedNodes.forEach(scan);
+            });
+        }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
+        scan(document.body);
+    };
+    if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
 })();
