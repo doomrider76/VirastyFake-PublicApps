@@ -1,16 +1,20 @@
-const CACHE_NAME = 'viraasti-v1.0.7'; 
+const CACHE_NAME = 'VirastyApps-v1.0.2'; 
 
 const ASSETS = [
   './',
   './index.html',
+  './features.js',
   './style.css',
   './script.js',
+  './auth.js',
+  './flags.js',
   './manifest.json',
   './Logo.png',
   './blue-tick.png',
   './yellow-tick.png',
   './green-tick.png',
   './personal-tick.png',
+  './vip.png',
   './Font.ttf'
 ];
 
