@@ -234,7 +234,7 @@ function lastLetterBeforeBadge(img) {
 const BADGE_LIFT_PX = 8;
 const BADGE_REF_YA = -.10; // وسط «ی» (تأییدشده)؛ بقیه‌ی حرف‌ها نسبت به آن از روی شکل واقعی فونت حساب می‌شوند
 // پایین‌آوردن اضافه‌ی هر نشان (پیکسل). مثبت = پایین‌تر، منفی = بالاتر. فقط همین عددها را کم‌وزیاد کنید.
-const BADGE_EXTRA_DOWN_PX = { "blue-tick": 0, "vip": 0, "yellow-tick": 3, "green-tick": 3, "personal-tick": 3 };
+const BADGE_EXTRA_DOWN_PX = { "blue-tick": 3, "vip": 3, "yellow-tick": 3, "green-tick": 3, "personal-tick": 3 };
 // جای ثابت نشان برای همه‌ی اسم‌ها: عدد بزرگ‌تر = نشان بالاتر، کوچک‌تر = پایین‌تر (هر 0.1 حدود 1.6 پیکسل)
 const BADGE_FIXED_CENTER = 0.18;
 const BADGE_FOLLOW_LAST_LETTER = false; // true = جای نشان وابسته به آخرین حرف اسم (رفتار قبلی)
@@ -301,7 +301,16 @@ function realignAllBadges() {
             Promise.resolve().then(() => { queued = false; alignAllBadges(); });
         }).observe(document.body, { childList: true, subtree: true });
         alignAllBadges();
-        if (document.fonts && document.fonts.ready) document.fonts.ready.then(realignAllBadges);
+        // موقع باز شدن تازه‌ی برنامه ممکن است فونت هنوز بالا نیامده باشد و اندازه‌گیری با فونت جایگزین انجام شود؛
+        // پس بعد از آماده شدن فونت‌ها، بعد از load کامل صفحه و چند بار با تأخیر دوباره تراز می‌کنیم.
+        if (document.fonts) {
+            if (document.fonts.ready) document.fonts.ready.then(realignAllBadges);
+            if (document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', realignAllBadges);
+        }
+        window.addEventListener('load', realignAllBadges);
+        window.addEventListener('pageshow', realignAllBadges);
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) realignAllBadges(); });
+        [300, 1000, 2500].forEach(t => setTimeout(realignAllBadges, t));
         let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(realignAllBadges, 200); });
     };
     if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
